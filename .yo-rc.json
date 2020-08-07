@@ -1,0 +1,37 @@
+{
+  "generator-jhipster": {
+    "promptValues": {
+      "packageName": "com.brc.als"
+    },
+    "jhipsterVersion": "6.9.1",
+    "applicationType": "microservice",
+    "baseName": "alertservice",
+    "packageName": "com.brc.als",
+    "packageFolder": "com/brc/als",
+    "serverPort": "4005",
+    "authenticationType": "jwt",
+    "cacheProvider": "no",
+    "websocket": false,
+    "databaseType": "sql",
+    "devDatabaseType": "postgresql",
+    "prodDatabaseType": "postgresql",
+    "searchEngine": false,
+    "messageBroker": false,
+    "serviceDiscoveryType": false,
+    "buildTool": "maven",
+    "enableSwaggerCodegen": false,
+    "jwtSecretKey": "Mzg0YTdmZGRiNjlhYjJmMzFjZGEyY2VjY2VlNWFlNDI5NDVkMjM3YTRhNjc1ZjI3ZTU3OTczMzY1N2MwMTI5NTE4MDJlOTE3MTAwZDg0ZmRjNWYwMmE2ZWMyOGQzZGEwYjg5OWZhYjlkODM5YzlmYWYyOTg5YjljZGYwMDg4MmQ=",
+    "embeddableLaunchScript": false,
+    "creationTimestamp": 1596784048893,
+    "testFrameworks": [],
+    "jhiPrefix": "jhi",
+    "entitySuffix": "",
+    "dtoSuffix": "DTO",
+    "otherModules": [],
+    "enableTranslation": false,
+    "clientPackageManager": "npm",
+    "blueprints": [],
+    "skipClient": true,
+    "skipUserManagement": true
+  }
+}
