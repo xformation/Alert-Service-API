@@ -1,0 +1,19 @@
+
+entity Alert{
+   guid String
+   name String
+   severity String
+   monitorcondition String
+   alertstate String
+   affectedresource String
+   monitorservice String
+   signaltype String
+   brcsubscription String
+   suppressionstate String
+   resourcegroup String
+   resources String
+   firedtime String
+}
+
+
+dto * with mapstruct service all with serviceImpl

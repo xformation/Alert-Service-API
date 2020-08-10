@@ -17,9 +17,11 @@ logging:
   level:
     ROOT: DEBUG
     io.github.jhipster: DEBUG
-    com.brc.als: DEBUG
+    com.brighton.cls: DEBUG
 
 spring:
+  application:
+        name: alertservice
   profiles:
     active: dev
     include:
@@ -38,8 +40,8 @@ spring:
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:postgresql://localhost:5432/alertservice
-    username: alertservice
-    password:
+    username: postgres
+    password: postgres
     hikari:
       poolName: Hikari
       auto-commit: false
@@ -69,7 +71,7 @@ spring:
         enabled: true
 
 server:
-  port: 4005
+  port: 5050
 
 # ===================================================================
 # JHipster specific properties
@@ -78,25 +80,27 @@ server:
 # ===================================================================
 
 jhipster:
+  clientApp:
+        name: alertservice
   # CORS is disabled by default on microservices, as you should access them through a gateway.
   # If you want to enable it, please uncomment the configuration below.
-  # cors:
-  #     allowed-origins: "*"
-  #     allowed-methods: "*"
-  #     allowed-headers: "*"
-  #     exposed-headers: "Authorization,Link,X-Total-Count"
-  #     allow-credentials: true
-  #     max-age: 1800
+  cors:
+       allowed-origins: "*"
+       allowed-methods: "*"
+       allowed-headers: "*"
+       exposed-headers: "Authorization,Link,X-Total-Count"
+       allow-credentials: true
+       max-age: 1800
   security:
     authentication:
       jwt:
         # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
-        base64-secret: Mzg0YTdmZGRiNjlhYjJmMzFjZGEyY2VjY2VlNWFlNDI5NDVkMjM3YTRhNjc1ZjI3ZTU3OTczMzY1N2MwMTI5NTE4MDJlOTE3MTAwZDg0ZmRjNWYwMmE2ZWMyOGQzZGEwYjg5OWZhYjlkODM5YzlmYWYyOTg5YjljZGYwMDg4MmQ=
+        base64-secret: MmU2ZmEzNWQwMzA2YzBiMGMzNzc0MjFkY2UzMDZhN2I1YTE4OTRkNzc2NjRiN2UzMWZmNWNhNTVhZmNjNzU2ZjA2N2ZmZWY3OWQxN2UwMWJjMmVkMWZmZGVjODc5NjdkZWUzZDllNjRlN2I5MmNlYmEzZDdmMzczMmQ0ZTBkY2I=
         # Token is valid 24 hours
         token-validity-in-seconds: 86400
         token-validity-in-seconds-for-remember-me: 2592000
   mail: # specific JHipster mail property, for standard properties see MailProperties
-    base-url: http://127.0.0.1:4005
+    base-url: http://127.0.0.1:4000
   metrics:
     logs: # Reports metrics in the logs
       enabled: false
