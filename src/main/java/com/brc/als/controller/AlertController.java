@@ -1,5 +1,6 @@
 package com.brc.als.controller;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import com.brc.als.AlertserviceApp;
+import com.brc.als.config.ApplicationProperties;
 import com.brc.als.domain.Alert;
 import com.brc.als.repository.AlertRepository;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -41,7 +44,7 @@ public class AlertController {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
-
+    
     @Autowired
     private AlertRepository alertRepository;
     
@@ -57,6 +60,7 @@ public class AlertController {
     @PostMapping("/updateAlert")
     public ResponseEntity<Object> updateAlert(@RequestBody ObjectNode obj) {
     	logger.info("Request to update alert. Request object : "+obj);
+    	ApplicationProperties applicationProperties=AlertserviceApp.getBean(ApplicationProperties.class);
     	List list = null;
         try {
         	String guid = obj.get("guid").asText();
@@ -76,7 +80,7 @@ public class AlertController {
             	obj.put("searchValue", guid);
             	obj.put("updateKey", "alertstate");
             	obj.put("updateValue", alertState);
-            	list = restTemplate.postForObject("http://search.service.com:8092/search/updateWithQuery", 
+            	list = restTemplate.postForObject(applicationProperties.getSearchSrvUrl()+"/search/updateWithQuery", 
             			obj, List.class);
             	logger.debug("Alert updated in elasticsearch successfully");
             	
@@ -84,6 +88,7 @@ public class AlertController {
             
         }catch(Exception e) {
         	logger.error("Error in updating alert: ",e);
+        	list = Collections.emptyList();
         	return new ResponseEntity<>(list, HttpStatus.PRECONDITION_FAILED);
         }
         return new ResponseEntity<>(list, HttpStatus.OK);
@@ -92,6 +97,7 @@ public class AlertController {
     @DeleteMapping("/deleteAlert/{guid}")
     public ResponseEntity<Object> deleteAlert(@PathVariable String guid) {
     	logger.info("Request to delete alert. Guid : "+guid);
+    	ApplicationProperties applicationProperties=AlertserviceApp.getBean(ApplicationProperties.class);
     	List list = null;
         try {
         	Alert al = new Alert();
@@ -106,16 +112,21 @@ public class AlertController {
             	obj.put("index", "alert");
             	obj.put("searchKey", "guid");
             	obj.put("searchValue", guid);
-            	list = restTemplate.postForObject("http://search.service.com:8092/search/deleteWithQuery", 
+            	list = restTemplate.postForObject(applicationProperties.getSearchSrvUrl()+"/search/deleteWithQuery", 
             			obj, List.class);
+            	if(list == null) {
+            		list = Collections.emptyList();
+            	}
             	logger.debug("Alert deleted from elasticsearch successfully");
             	
             }
             
         }catch(Exception e) {
         	logger.error("Error in updating alert: ",e);
+        	list = Collections.emptyList();
         	return new ResponseEntity<>(list, HttpStatus.PRECONDITION_FAILED);
         }
+        
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
     
@@ -136,5 +147,6 @@ public class AlertController {
 	    List<Alert> list = alertRepository.findAll(Sort.by(Direction.DESC, "id"));
 	    return list;
 	}
+	
     
 }

@@ -10,4 +10,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
 public class ApplicationProperties {
+	private String searchSrvUrl;
+
+	public String getSearchSrvUrl() {
+		return searchSrvUrl;
+	}
+
+	public void setSearchSrvUrl(String searchSrvUrl) {
+		this.searchSrvUrl = searchSrvUrl;
+	}
+	
 }
+
+
