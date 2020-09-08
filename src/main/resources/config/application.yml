@@ -126,4 +126,4 @@ jhipster:
 
 # application:
 application:
-    searchSrvUrl: http://localhost:8092
+    searchSrvUrl: http://100.64.108.25:8092
