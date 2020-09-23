@@ -17,6 +17,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,9 +46,6 @@ public class AlertResourceIT {
     private static final String DEFAULT_MONITORCONDITION = "AAAAAAAAAA";
     private static final String UPDATED_MONITORCONDITION = "BBBBBBBBBB";
 
-    private static final String DEFAULT_ALERTSTATE = "AAAAAAAAAA";
-    private static final String UPDATED_ALERTSTATE = "BBBBBBBBBB";
-
     private static final String DEFAULT_AFFECTEDRESOURCE = "AAAAAAAAAA";
     private static final String UPDATED_AFFECTEDRESOURCE = "BBBBBBBBBB";
 
@@ -70,6 +69,30 @@ public class AlertResourceIT {
 
     private static final String DEFAULT_FIREDTIME = "AAAAAAAAAA";
     private static final String UPDATED_FIREDTIME = "BBBBBBBBBB";
+
+    private static final Instant DEFAULT_CREATED_ON = Instant.ofEpochMilli(0L);
+    private static final Instant UPDATED_CREATED_ON = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+
+    private static final Instant DEFAULT_UPDATED_ON = Instant.ofEpochMilli(0L);
+    private static final Instant UPDATED_UPDATED_ON = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+
+    private static final String DEFAULT_ALERT_STATE = "AAAAAAAAAA";
+    private static final String UPDATED_ALERT_STATE = "BBBBBBBBBB";
+
+    private static final String DEFAULT_CLIENT = "AAAAAAAAAA";
+    private static final String UPDATED_CLIENT = "BBBBBBBBBB";
+
+    private static final String DEFAULT_CLIENT_URL = "AAAAAAAAAA";
+    private static final String UPDATED_CLIENT_URL = "BBBBBBBBBB";
+
+    private static final String DEFAULT_DESCRIPTION = "AAAAAAAAAA";
+    private static final String UPDATED_DESCRIPTION = "BBBBBBBBBB";
+
+    private static final String DEFAULT_DETAILS = "AAAAAAAAAA";
+    private static final String UPDATED_DETAILS = "BBBBBBBBBB";
+
+    private static final String DEFAULT_INCIDENT_KEY = "AAAAAAAAAA";
+    private static final String UPDATED_INCIDENT_KEY = "BBBBBBBBBB";
 
     @Autowired
     private AlertRepository alertRepository;
@@ -100,7 +123,6 @@ public class AlertResourceIT {
             .name(DEFAULT_NAME)
             .severity(DEFAULT_SEVERITY)
             .monitorcondition(DEFAULT_MONITORCONDITION)
-            .alertstate(DEFAULT_ALERTSTATE)
             .affectedresource(DEFAULT_AFFECTEDRESOURCE)
             .monitorservice(DEFAULT_MONITORSERVICE)
             .signaltype(DEFAULT_SIGNALTYPE)
@@ -108,7 +130,15 @@ public class AlertResourceIT {
             .suppressionstate(DEFAULT_SUPPRESSIONSTATE)
             .resourcegroup(DEFAULT_RESOURCEGROUP)
             .resources(DEFAULT_RESOURCES)
-            .firedtime(DEFAULT_FIREDTIME);
+            .firedtime(DEFAULT_FIREDTIME)
+            .createdOn(DEFAULT_CREATED_ON)
+            .updatedOn(DEFAULT_UPDATED_ON)
+            .alertState(DEFAULT_ALERT_STATE)
+            .client(DEFAULT_CLIENT)
+            .clientUrl(DEFAULT_CLIENT_URL)
+            .description(DEFAULT_DESCRIPTION)
+            .details(DEFAULT_DETAILS)
+            .incidentKey(DEFAULT_INCIDENT_KEY);
         return alert;
     }
     /**
@@ -123,7 +153,6 @@ public class AlertResourceIT {
             .name(UPDATED_NAME)
             .severity(UPDATED_SEVERITY)
             .monitorcondition(UPDATED_MONITORCONDITION)
-            .alertstate(UPDATED_ALERTSTATE)
             .affectedresource(UPDATED_AFFECTEDRESOURCE)
             .monitorservice(UPDATED_MONITORSERVICE)
             .signaltype(UPDATED_SIGNALTYPE)
@@ -131,7 +160,15 @@ public class AlertResourceIT {
             .suppressionstate(UPDATED_SUPPRESSIONSTATE)
             .resourcegroup(UPDATED_RESOURCEGROUP)
             .resources(UPDATED_RESOURCES)
-            .firedtime(UPDATED_FIREDTIME);
+            .firedtime(UPDATED_FIREDTIME)
+            .createdOn(UPDATED_CREATED_ON)
+            .updatedOn(UPDATED_UPDATED_ON)
+            .alertState(UPDATED_ALERT_STATE)
+            .client(UPDATED_CLIENT)
+            .clientUrl(UPDATED_CLIENT_URL)
+            .description(UPDATED_DESCRIPTION)
+            .details(UPDATED_DETAILS)
+            .incidentKey(UPDATED_INCIDENT_KEY);
         return alert;
     }
 
@@ -159,7 +196,6 @@ public class AlertResourceIT {
         assertThat(testAlert.getName()).isEqualTo(DEFAULT_NAME);
         assertThat(testAlert.getSeverity()).isEqualTo(DEFAULT_SEVERITY);
         assertThat(testAlert.getMonitorcondition()).isEqualTo(DEFAULT_MONITORCONDITION);
-        assertThat(testAlert.getAlertstate()).isEqualTo(DEFAULT_ALERTSTATE);
         assertThat(testAlert.getAffectedresource()).isEqualTo(DEFAULT_AFFECTEDRESOURCE);
         assertThat(testAlert.getMonitorservice()).isEqualTo(DEFAULT_MONITORSERVICE);
         assertThat(testAlert.getSignaltype()).isEqualTo(DEFAULT_SIGNALTYPE);
@@ -168,6 +204,14 @@ public class AlertResourceIT {
         assertThat(testAlert.getResourcegroup()).isEqualTo(DEFAULT_RESOURCEGROUP);
         assertThat(testAlert.getResources()).isEqualTo(DEFAULT_RESOURCES);
         assertThat(testAlert.getFiredtime()).isEqualTo(DEFAULT_FIREDTIME);
+        assertThat(testAlert.getCreatedOn()).isEqualTo(DEFAULT_CREATED_ON);
+        assertThat(testAlert.getUpdatedOn()).isEqualTo(DEFAULT_UPDATED_ON);
+        assertThat(testAlert.getAlertState()).isEqualTo(DEFAULT_ALERT_STATE);
+        assertThat(testAlert.getClient()).isEqualTo(DEFAULT_CLIENT);
+        assertThat(testAlert.getClientUrl()).isEqualTo(DEFAULT_CLIENT_URL);
+        assertThat(testAlert.getDescription()).isEqualTo(DEFAULT_DESCRIPTION);
+        assertThat(testAlert.getDetails()).isEqualTo(DEFAULT_DETAILS);
+        assertThat(testAlert.getIncidentKey()).isEqualTo(DEFAULT_INCIDENT_KEY);
     }
 
     @Test
@@ -206,7 +250,6 @@ public class AlertResourceIT {
             .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)))
             .andExpect(jsonPath("$.[*].severity").value(hasItem(DEFAULT_SEVERITY)))
             .andExpect(jsonPath("$.[*].monitorcondition").value(hasItem(DEFAULT_MONITORCONDITION)))
-            .andExpect(jsonPath("$.[*].alertstate").value(hasItem(DEFAULT_ALERTSTATE)))
             .andExpect(jsonPath("$.[*].affectedresource").value(hasItem(DEFAULT_AFFECTEDRESOURCE)))
             .andExpect(jsonPath("$.[*].monitorservice").value(hasItem(DEFAULT_MONITORSERVICE)))
             .andExpect(jsonPath("$.[*].signaltype").value(hasItem(DEFAULT_SIGNALTYPE)))
@@ -214,7 +257,15 @@ public class AlertResourceIT {
             .andExpect(jsonPath("$.[*].suppressionstate").value(hasItem(DEFAULT_SUPPRESSIONSTATE)))
             .andExpect(jsonPath("$.[*].resourcegroup").value(hasItem(DEFAULT_RESOURCEGROUP)))
             .andExpect(jsonPath("$.[*].resources").value(hasItem(DEFAULT_RESOURCES)))
-            .andExpect(jsonPath("$.[*].firedtime").value(hasItem(DEFAULT_FIREDTIME)));
+            .andExpect(jsonPath("$.[*].firedtime").value(hasItem(DEFAULT_FIREDTIME)))
+            .andExpect(jsonPath("$.[*].createdOn").value(hasItem(DEFAULT_CREATED_ON.toString())))
+            .andExpect(jsonPath("$.[*].updatedOn").value(hasItem(DEFAULT_UPDATED_ON.toString())))
+            .andExpect(jsonPath("$.[*].alertState").value(hasItem(DEFAULT_ALERT_STATE)))
+            .andExpect(jsonPath("$.[*].client").value(hasItem(DEFAULT_CLIENT)))
+            .andExpect(jsonPath("$.[*].clientUrl").value(hasItem(DEFAULT_CLIENT_URL)))
+            .andExpect(jsonPath("$.[*].description").value(hasItem(DEFAULT_DESCRIPTION)))
+            .andExpect(jsonPath("$.[*].details").value(hasItem(DEFAULT_DETAILS)))
+            .andExpect(jsonPath("$.[*].incidentKey").value(hasItem(DEFAULT_INCIDENT_KEY)));
     }
     
     @Test
@@ -232,7 +283,6 @@ public class AlertResourceIT {
             .andExpect(jsonPath("$.name").value(DEFAULT_NAME))
             .andExpect(jsonPath("$.severity").value(DEFAULT_SEVERITY))
             .andExpect(jsonPath("$.monitorcondition").value(DEFAULT_MONITORCONDITION))
-            .andExpect(jsonPath("$.alertstate").value(DEFAULT_ALERTSTATE))
             .andExpect(jsonPath("$.affectedresource").value(DEFAULT_AFFECTEDRESOURCE))
             .andExpect(jsonPath("$.monitorservice").value(DEFAULT_MONITORSERVICE))
             .andExpect(jsonPath("$.signaltype").value(DEFAULT_SIGNALTYPE))
@@ -240,7 +290,15 @@ public class AlertResourceIT {
             .andExpect(jsonPath("$.suppressionstate").value(DEFAULT_SUPPRESSIONSTATE))
             .andExpect(jsonPath("$.resourcegroup").value(DEFAULT_RESOURCEGROUP))
             .andExpect(jsonPath("$.resources").value(DEFAULT_RESOURCES))
-            .andExpect(jsonPath("$.firedtime").value(DEFAULT_FIREDTIME));
+            .andExpect(jsonPath("$.firedtime").value(DEFAULT_FIREDTIME))
+            .andExpect(jsonPath("$.createdOn").value(DEFAULT_CREATED_ON.toString()))
+            .andExpect(jsonPath("$.updatedOn").value(DEFAULT_UPDATED_ON.toString()))
+            .andExpect(jsonPath("$.alertState").value(DEFAULT_ALERT_STATE))
+            .andExpect(jsonPath("$.client").value(DEFAULT_CLIENT))
+            .andExpect(jsonPath("$.clientUrl").value(DEFAULT_CLIENT_URL))
+            .andExpect(jsonPath("$.description").value(DEFAULT_DESCRIPTION))
+            .andExpect(jsonPath("$.details").value(DEFAULT_DETAILS))
+            .andExpect(jsonPath("$.incidentKey").value(DEFAULT_INCIDENT_KEY));
     }
     @Test
     @Transactional
@@ -267,7 +325,6 @@ public class AlertResourceIT {
             .name(UPDATED_NAME)
             .severity(UPDATED_SEVERITY)
             .monitorcondition(UPDATED_MONITORCONDITION)
-            .alertstate(UPDATED_ALERTSTATE)
             .affectedresource(UPDATED_AFFECTEDRESOURCE)
             .monitorservice(UPDATED_MONITORSERVICE)
             .signaltype(UPDATED_SIGNALTYPE)
@@ -275,7 +332,15 @@ public class AlertResourceIT {
             .suppressionstate(UPDATED_SUPPRESSIONSTATE)
             .resourcegroup(UPDATED_RESOURCEGROUP)
             .resources(UPDATED_RESOURCES)
-            .firedtime(UPDATED_FIREDTIME);
+            .firedtime(UPDATED_FIREDTIME)
+            .createdOn(UPDATED_CREATED_ON)
+            .updatedOn(UPDATED_UPDATED_ON)
+            .alertState(UPDATED_ALERT_STATE)
+            .client(UPDATED_CLIENT)
+            .clientUrl(UPDATED_CLIENT_URL)
+            .description(UPDATED_DESCRIPTION)
+            .details(UPDATED_DETAILS)
+            .incidentKey(UPDATED_INCIDENT_KEY);
         AlertDTO alertDTO = alertMapper.toDto(updatedAlert);
 
         restAlertMockMvc.perform(put("/api/alerts")
@@ -291,7 +356,6 @@ public class AlertResourceIT {
         assertThat(testAlert.getName()).isEqualTo(UPDATED_NAME);
         assertThat(testAlert.getSeverity()).isEqualTo(UPDATED_SEVERITY);
         assertThat(testAlert.getMonitorcondition()).isEqualTo(UPDATED_MONITORCONDITION);
-        assertThat(testAlert.getAlertstate()).isEqualTo(UPDATED_ALERTSTATE);
         assertThat(testAlert.getAffectedresource()).isEqualTo(UPDATED_AFFECTEDRESOURCE);
         assertThat(testAlert.getMonitorservice()).isEqualTo(UPDATED_MONITORSERVICE);
         assertThat(testAlert.getSignaltype()).isEqualTo(UPDATED_SIGNALTYPE);
@@ -300,6 +364,14 @@ public class AlertResourceIT {
         assertThat(testAlert.getResourcegroup()).isEqualTo(UPDATED_RESOURCEGROUP);
         assertThat(testAlert.getResources()).isEqualTo(UPDATED_RESOURCES);
         assertThat(testAlert.getFiredtime()).isEqualTo(UPDATED_FIREDTIME);
+        assertThat(testAlert.getCreatedOn()).isEqualTo(UPDATED_CREATED_ON);
+        assertThat(testAlert.getUpdatedOn()).isEqualTo(UPDATED_UPDATED_ON);
+        assertThat(testAlert.getAlertState()).isEqualTo(UPDATED_ALERT_STATE);
+        assertThat(testAlert.getClient()).isEqualTo(UPDATED_CLIENT);
+        assertThat(testAlert.getClientUrl()).isEqualTo(UPDATED_CLIENT_URL);
+        assertThat(testAlert.getDescription()).isEqualTo(UPDATED_DESCRIPTION);
+        assertThat(testAlert.getDetails()).isEqualTo(UPDATED_DETAILS);
+        assertThat(testAlert.getIncidentKey()).isEqualTo(UPDATED_INCIDENT_KEY);
     }
 
     @Test

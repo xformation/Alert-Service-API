@@ -2,8 +2,10 @@ package com.brc.als.domain;
 
 
 import javax.persistence.*;
+import javax.validation.constraints.*;
 
 import java.io.Serializable;
+import java.time.Instant;
 
 /**
  * A Alert.
@@ -31,9 +33,6 @@ public class Alert implements Serializable {
     @Column(name = "monitorcondition")
     private String monitorcondition;
 
-    @Column(name = "alertstate")
-    private String alertstate;
-
     @Column(name = "affectedresource")
     private String affectedresource;
 
@@ -57,6 +56,31 @@ public class Alert implements Serializable {
 
     @Column(name = "firedtime")
     private String firedtime;
+
+    @Column(name = "created_on")
+    private Instant createdOn;
+
+    @Column(name = "updated_on")
+    private Instant updatedOn;
+
+    @Column(name = "alert_state")
+    private String alertState;
+
+    @Column(name = "client")
+    private String client;
+
+    @Column(name = "client_url")
+    private String clientUrl;
+
+    @Size(max = 5000)
+    @Column(name = "description", length = 5000)
+    private String description;
+
+    @Column(name = "details")
+    private String details;
+
+    @Column(name = "incident_key")
+    private String incidentKey;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
     public Long getId() {
@@ -117,19 +141,6 @@ public class Alert implements Serializable {
 
     public void setMonitorcondition(String monitorcondition) {
         this.monitorcondition = monitorcondition;
-    }
-
-    public String getAlertstate() {
-        return alertstate;
-    }
-
-    public Alert alertstate(String alertstate) {
-        this.alertstate = alertstate;
-        return this;
-    }
-
-    public void setAlertstate(String alertstate) {
-        this.alertstate = alertstate;
     }
 
     public String getAffectedresource() {
@@ -235,6 +246,110 @@ public class Alert implements Serializable {
     public void setFiredtime(String firedtime) {
         this.firedtime = firedtime;
     }
+
+    public Instant getCreatedOn() {
+        return createdOn;
+    }
+
+    public Alert createdOn(Instant createdOn) {
+        this.createdOn = createdOn;
+        return this;
+    }
+
+    public void setCreatedOn(Instant createdOn) {
+        this.createdOn = createdOn;
+    }
+
+    public Instant getUpdatedOn() {
+        return updatedOn;
+    }
+
+    public Alert updatedOn(Instant updatedOn) {
+        this.updatedOn = updatedOn;
+        return this;
+    }
+
+    public void setUpdatedOn(Instant updatedOn) {
+        this.updatedOn = updatedOn;
+    }
+
+    public String getAlertState() {
+        return alertState;
+    }
+
+    public Alert alertState(String alertState) {
+        this.alertState = alertState;
+        return this;
+    }
+
+    public void setAlertState(String alertState) {
+        this.alertState = alertState;
+    }
+
+    public String getClient() {
+        return client;
+    }
+
+    public Alert client(String client) {
+        this.client = client;
+        return this;
+    }
+
+    public void setClient(String client) {
+        this.client = client;
+    }
+
+    public String getClientUrl() {
+        return clientUrl;
+    }
+
+    public Alert clientUrl(String clientUrl) {
+        this.clientUrl = clientUrl;
+        return this;
+    }
+
+    public void setClientUrl(String clientUrl) {
+        this.clientUrl = clientUrl;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Alert description(String description) {
+        this.description = description;
+        return this;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public Alert details(String details) {
+        this.details = details;
+        return this;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
+    }
+
+    public String getIncidentKey() {
+        return incidentKey;
+    }
+
+    public Alert incidentKey(String incidentKey) {
+        this.incidentKey = incidentKey;
+        return this;
+    }
+
+    public void setIncidentKey(String incidentKey) {
+        this.incidentKey = incidentKey;
+    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -262,7 +377,6 @@ public class Alert implements Serializable {
             ", name='" + getName() + "'" +
             ", severity='" + getSeverity() + "'" +
             ", monitorcondition='" + getMonitorcondition() + "'" +
-            ", alertstate='" + getAlertstate() + "'" +
             ", affectedresource='" + getAffectedresource() + "'" +
             ", monitorservice='" + getMonitorservice() + "'" +
             ", signaltype='" + getSignaltype() + "'" +
@@ -271,6 +385,14 @@ public class Alert implements Serializable {
             ", resourcegroup='" + getResourcegroup() + "'" +
             ", resources='" + getResources() + "'" +
             ", firedtime='" + getFiredtime() + "'" +
+            ", createdOn='" + getCreatedOn() + "'" +
+            ", updatedOn='" + getUpdatedOn() + "'" +
+            ", alertState='" + getAlertState() + "'" +
+            ", client='" + getClient() + "'" +
+            ", clientUrl='" + getClientUrl() + "'" +
+            ", description='" + getDescription() + "'" +
+            ", details='" + getDetails() + "'" +
+            ", incidentKey='" + getIncidentKey() + "'" +
             "}";
     }
 }

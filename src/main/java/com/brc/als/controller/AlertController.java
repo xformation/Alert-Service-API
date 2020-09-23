@@ -70,7 +70,7 @@ public class AlertController {
             String alertState = obj.get("alertState").asText();
             if(oa.isPresent()) {
             	Alert alert = oa.get();
-            	alert.setAlertstate(alertState);
+            	alert.setAlertState(alertState);
             	alert = alertRepository.save(alert);
             	logger.debug("Alert updated in db successfully");
             	

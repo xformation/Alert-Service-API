@@ -12,9 +12,9 @@
     -->
     <changeSet id="20200808081138-1" author="jhipster">
         <createTable tableName="alert">
-            <column name="id" type="bigint">
+            <!-- <column name="id" type="bigint">
                 <constraints primaryKey="true" nullable="false"/>
-            </column>
+            </column> -->
             <column name="guid" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
@@ -25,9 +25,6 @@
                 <constraints nullable="true" />
             </column>
             <column name="monitorcondition" type="varchar(255)">
-                <constraints nullable="true" />
-            </column>
-            <column name="alertstate" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
             <column name="affectedresource" type="varchar(255)">
@@ -54,8 +51,36 @@
             <column name="firedtime" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
+            <column name="created_on" type="datetime">
+                <constraints nullable="true" />
+            </column>
+            <column name="updated_on" type="datetime">
+                <constraints nullable="true" />
+            </column>
+            <column name="alert_state" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="client" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="client_url" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="description" type="varchar(5000)">
+                <constraints nullable="true" />
+            </column>
+            <column name="details" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="incident_key" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
             <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here -->
         </createTable>
+        <dropDefaultValue tableName="alert" columnName="created_on" columnDataType="datetime"/>
+        <dropDefaultValue tableName="alert" columnName="updated_on" columnDataType="datetime"/>
     </changeSet>
+
+        
 
 </databaseChangeLog>

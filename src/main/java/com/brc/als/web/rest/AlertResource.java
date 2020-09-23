@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -45,7 +46,7 @@ public class AlertResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("/alerts")
-    public ResponseEntity<AlertDTO> createAlert(@RequestBody AlertDTO alertDTO) throws URISyntaxException {
+    public ResponseEntity<AlertDTO> createAlert(@Valid @RequestBody AlertDTO alertDTO) throws URISyntaxException {
         log.debug("REST request to save Alert : {}", alertDTO);
         if (alertDTO.getId() != null) {
             throw new BadRequestAlertException("A new alert cannot already have an ID", ENTITY_NAME, "idexists");
@@ -66,7 +67,7 @@ public class AlertResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PutMapping("/alerts")
-    public ResponseEntity<AlertDTO> updateAlert(@RequestBody AlertDTO alertDTO) throws URISyntaxException {
+    public ResponseEntity<AlertDTO> updateAlert(@Valid @RequestBody AlertDTO alertDTO) throws URISyntaxException {
         log.debug("REST request to update Alert : {}", alertDTO);
         if (alertDTO.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");

@@ -4,7 +4,6 @@ entity Alert{
    name String
    severity String
    monitorcondition String
-   alertstate String
    affectedresource String
    monitorservice String
    signaltype String
@@ -13,6 +12,14 @@ entity Alert{
    resourcegroup String
    resources String
    firedtime String
+   createdOn Instant
+   updatedOn Instant 
+   alertState String
+   client String
+   clientUrl String
+   description String maxlength(5000)
+   details String
+   incidentKey String
 }
 
 
