@@ -19,7 +19,7 @@ public interface AlertMapper extends EntityMapper<AlertDTO, Alert> {
             return null;
         }
         Alert alert = new Alert();
-        alert.setId(id);
+//        alert.setId(id);
         return alert;
     }
 }

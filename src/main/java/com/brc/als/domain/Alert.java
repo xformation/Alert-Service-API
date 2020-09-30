@@ -16,10 +16,10 @@ public class Alert implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
-    @SequenceGenerator(name = "sequenceGenerator")
-    private Long id;
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
+//    @SequenceGenerator(name = "sequenceGenerator")
+//    private Long id;
 
     @Column(name = "guid")
     private String guid;
@@ -83,13 +83,13 @@ public class Alert implements Serializable {
     private String incidentKey;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+//    public Long getId() {
+//        return id;
+//    }
+//
+//    public void setId(Long id) {
+//        this.id = id;
+//    }
 
     public String getGuid() {
         return guid;
@@ -360,7 +360,7 @@ public class Alert implements Serializable {
         if (!(o instanceof Alert)) {
             return false;
         }
-        return id != null && id.equals(((Alert) o).id);
+        return guid != null && guid.equals(((Alert) o).guid);
     }
 
     @Override
@@ -372,7 +372,7 @@ public class Alert implements Serializable {
     @Override
     public String toString() {
         return "Alert{" +
-            "id=" + getId() +
+//            "id=" + getId() +
             ", guid='" + getGuid() + "'" +
             ", name='" + getName() + "'" +
             ", severity='" + getSeverity() + "'" +

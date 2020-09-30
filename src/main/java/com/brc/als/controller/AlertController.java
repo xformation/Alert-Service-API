@@ -105,7 +105,7 @@ public class AlertController {
         	Optional<Alert> oa = alertRepository.findOne(Example.of(al));
             if(oa.isPresent()) {
             	Alert alert = oa.get();
-            	alertRepository.deleteById(alert.getId());
+            	alertRepository.delete(alert);
             	logger.debug("Alert deleted from db successfully");
             	Map<String, String> obj = new HashMap<>();
             	obj.put("type", "alert");

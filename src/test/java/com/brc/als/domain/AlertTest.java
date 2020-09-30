@@ -10,13 +10,13 @@ public class AlertTest {
     public void equalsVerifier() throws Exception {
         TestUtil.equalsVerifier(Alert.class);
         Alert alert1 = new Alert();
-        alert1.setId(1L);
+//        alert1.setId(1L);
         Alert alert2 = new Alert();
-        alert2.setId(alert1.getId());
+//        alert2.setId(alert1.getId());
         assertThat(alert1).isEqualTo(alert2);
-        alert2.setId(2L);
+//        alert2.setId(2L);
         assertThat(alert1).isNotEqualTo(alert2);
-        alert1.setId(null);
+//        alert1.setId(null);
         assertThat(alert1).isNotEqualTo(alert2);
     }
 }
