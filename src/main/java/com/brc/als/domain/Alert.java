@@ -16,11 +16,14 @@ public class Alert implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+//  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
+//  @SequenceGenerator(name = "sequenceGenerator")
+
 //    @Id
-//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
-//    @SequenceGenerator(name = "sequenceGenerator")
+//    @Column(name = "id")
 //    private Long id;
 
+    @Id
     @Column(name = "guid")
     private String guid;
 
