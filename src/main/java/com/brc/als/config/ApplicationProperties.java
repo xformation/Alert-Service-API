@@ -11,6 +11,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
 public class ApplicationProperties {
 	private String searchSrvUrl;
+	private String druidHost;
+	private int druidPort;
+	private String druidEndPoint;
+	private String druidAlertActivityDataSource; 
 
 	public String getSearchSrvUrl() {
 		return searchSrvUrl;
@@ -18,6 +22,38 @@ public class ApplicationProperties {
 
 	public void setSearchSrvUrl(String searchSrvUrl) {
 		this.searchSrvUrl = searchSrvUrl;
+	}
+
+	public String getDruidHost() {
+		return druidHost;
+	}
+
+	public void setDruidHost(String druidHost) {
+		this.druidHost = druidHost;
+	}
+
+	public int getDruidPort() {
+		return druidPort;
+	}
+
+	public void setDruidPort(int druidPort) {
+		this.druidPort = druidPort;
+	}
+
+	public String getDruidEndPoint() {
+		return druidEndPoint;
+	}
+
+	public void setDruidEndPoint(String druidEndPoint) {
+		this.druidEndPoint = druidEndPoint;
+	}
+
+	public String getDruidAlertActivityDataSource() {
+		return druidAlertActivityDataSource;
+	}
+
+	public void setDruidAlertActivityDataSource(String druidAlertActivityDataSource) {
+		this.druidAlertActivityDataSource = druidAlertActivityDataSource;
 	}
 	
 }
