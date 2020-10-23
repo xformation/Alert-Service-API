@@ -126,7 +126,6 @@ jhipster:
 
 # application:
 application:
-    host: http://100.64.108.25
     searchSrvUrl: http://localhost:8092
     druidHost: 100.64.108.25
     druidPort: 18888

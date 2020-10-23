@@ -14,9 +14,9 @@ public class SynectikDruidClient {
 
 	@Bean
     public DruidClient client() {
-		ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
+//		ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
 		
-		DruidConfiguration config = DruidConfiguration.builder().host(ap.getDruidHost()).port(ap.getDruidPort()).endpoint(ap.getDruidEndPoint()).build();
+		DruidConfiguration config = DruidConfiguration.builder().host("100.64.108.25").port(18888).endpoint("druid/v2/").build();
 		DruidClient client = new DruidJerseyClient(config);
 		
 		return client;
