@@ -18,12 +18,11 @@ import org.springframework.web.client.RestTemplate;
 
 import com.brc.als.AlertserviceApp;
 import com.brc.als.config.ApplicationProperties;
-import com.brc.als.repository.AlertRepository;
+import com.brc.als.config.SynectikDruidClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import in.zapr.druid.druidry.client.DruidClient;
-import in.zapr.druid.druidry.client.DruidConfiguration;
-import in.zapr.druid.druidry.client.DruidJerseyClient;
+import in.zapr.druid.druidry.client.exception.ConnectionException;
 import in.zapr.druid.druidry.dataSource.TableDataSource;
 import in.zapr.druid.druidry.filter.DruidFilter;
 import in.zapr.druid.druidry.filter.SelectorFilter;
@@ -44,15 +43,21 @@ public class AlertActivityController {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
     
-    @Autowired
-    private AlertRepository alertRepository;
+//    @Autowired
+//    private AlertRepository alertRepository;
     
     @Autowired
     RestTemplate restTemplate;
+    
+    @Autowired
+    SynectikDruidClient synDruidClient;
+    
     @GetMapping("/getDataFromAlertActivity/{guid}")
 	public List<Object> getDataFromAlertActivity(@PathVariable String guid){
-//    	ApplicationProperties applicationProperties=AlertserviceApp.getBean(ApplicationProperties.class);
+    	ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
 		List<Object> list=new ArrayList<Object>();
+		DruidClient client = synDruidClient.client(); 
+		logger.info("Request to get data from druid");
 		try {
 
 			DateTime startTime = new DateTime(2020, 10, 19, 0, 0, 0, DateTimeZone.UTC);
@@ -61,21 +66,27 @@ public class AlertActivityController {
 
 			DruidFilter filter = new SelectorFilter("guid", guid);
 
-			DruidScanQuery query = DruidScanQuery.builder().dataSource(new TableDataSource("alert_activity"))
+			DruidScanQuery query = DruidScanQuery.builder().dataSource(new TableDataSource(ap.getDruidAlertActivityDataSource()))
 					.intervals(Collections.singletonList(interval))
 					.filter(filter)
 					.batchSize(10000).limit(1000L).legacy(true).build();
 			ObjectMapper mapper = new ObjectMapper();
 			String requiredJson = mapper.writeValueAsString(query);
-			DruidConfiguration config = DruidConfiguration.builder().host("100.64.108.25").port(18888).endpoint("druid/v2/").build();
-			DruidClient client = new DruidJerseyClient(config);
+//			DruidConfiguration config = DruidConfiguration.builder().host("100.64.108.25").port(18888).endpoint("druid/v2/").build();
+//			DruidClient client = new DruidJerseyClient(config);
 			client.connect();
 			list= client.query(query, Object.class);
-			System.out.println(list);
-			client.close();
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
+			logger.debug("Record list retrive from druid : ",list);
+			
+		}catch (Exception e) {
+			logger.error("Exception in getting data from druid. Returning empty list : ", e);
+			return Collections.emptyList();
+		}finally {
+			try {
+				client.close();
+			}catch(ConnectionException ce) {
+				logger.error("Exception in closing druid client connection: ", ce);
+			}
 		}
 		return list;
 	}
