@@ -80,7 +80,7 @@ public class AlertController {
 				Alert alert = oa.get();
 				alert.setAlertState(alertState);
 				alert = alertRepository.save(alert);
-				logger.debug("Alert updated in db successfully");
+				logger.info("Alert updated in db successfully");
 
 				obj.put("type", "alert");
 				obj.put("index", "alert");
@@ -90,6 +90,7 @@ public class AlertController {
 				obj.put("updateValue", alertState);
 				list = restTemplate.postForObject(applicationProperties.getSearchSrvUrl() + "/search/updateWithQuery",
 						obj, List.class);
+				logger.info("Alert updated in elasticsearch successfully");
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("guid", guid);
 				jsonObject.put("name", alert.getName());
@@ -106,7 +107,7 @@ public class AlertController {
 						.fromUriString("http://100.64.108.25:8190/kafka/send")
 						.queryParam("topic", "alert_activity_final").queryParam("msg", jsonObject.toString());
 				restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, String.class);
-				logger.debug("Alert updated in elasticsearch successfully");
+				logger.debug("Alert activity sent to separate kafka queue : alert_activity_final");
 
 			}
 
