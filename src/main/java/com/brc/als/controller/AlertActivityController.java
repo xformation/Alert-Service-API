@@ -1,10 +1,14 @@
 package com.brc.als.controller;
 
+import java.security.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,8 +115,8 @@ public class AlertActivityController {
 		DruidClient client = new DruidJerseyClient(config);
 		logger.info("Request to get data from druid");
 		try {
-			LocalDate startDate=LocalDate.now().minus(10,ChronoUnit.DAYS);
-			LocalDate endDate=LocalDate.now().plus(1,ChronoUnit.DAYS);
+			LocalDate startDate=LocalDate.now().minus(2,ChronoUnit.YEARS);
+			LocalDate endDate=LocalDate.now().plus(1,ChronoUnit.YEARS);
 			DateTime startTime = new DateTime(startDate.getYear(), startDate.getMonthValue(), startDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
 			DateTime endTime = new DateTime(endDate.getYear(),endDate.getMonthValue(), endDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
 			Interval interval = new Interval(startTime, endTime);
@@ -124,12 +128,26 @@ public class AlertActivityController {
 			System.out.println(lst);
 			list= client.query(query,Map.class);
 			for(Map map: list) {
-				 listData=(List<Map>) map.get("events");
+				List<Map> eventList= (List<Map>) map.get("events");
+				 listData.addAll(eventList);
 			}
+			Comparator<Map> mapComparator = new Comparator<Map>() {
+				@Override
+				public int compare(Map m1, Map m2) {
+					// TODO Auto-generated method stub
+									
+					Instant val1 = Instant.parse(m1.get("timestamp").toString());
+					Instant val2 = Instant.parse(m2.get("timestamp").toString());
+					return val2.compareTo(val1);
+				}
+			};
+			Collections.sort(listData, mapComparator);
+			listData.forEach(oneMap -> repalceTimeStamp(oneMap));
+			System.out.println(listData);
 			logger.debug("Record list retrive from druid : ",list);
-			
 		}catch (Exception e) {
 			logger.error("Exception in getting data from druid. Returning empty list : ", e);
+			e.printStackTrace();
 			return Collections.emptyList();
 		}finally {
 			try {
@@ -168,10 +186,23 @@ public class AlertActivityController {
 				List<Map> eventList= (List<Map>) map.get("events");
 				 listData.addAll(eventList);
 			}
+			Comparator<Map> mapComparator = new Comparator<Map>() {
+				@Override
+				public int compare(Map m1, Map m2) {
+					// TODO Auto-generated method stub
+									
+					Instant val1 = Instant.parse(m1.get("timestamp").toString());
+					Instant val2 = Instant.parse(m2.get("timestamp").toString());
+					return val2.compareTo(val1);
+				}
+			};
+			Collections.sort(listData, mapComparator);
+			listData.forEach(oneMap -> repalceTimeStamp(oneMap));
+			System.out.println(listData);
 			logger.debug("Record list retrive from druid : ",list);
-			
 		}catch (Exception e) {
 			logger.error("Exception in getting data from druid. Returning empty list : ", e);
+			e.printStackTrace();
 			return Collections.emptyList();
 		}finally {
 			try {
@@ -182,5 +213,13 @@ public class AlertActivityController {
 		}
 		return listData;
 }
+	private static void repalceTimeStamp(Map oneMap) {
+		// TODO Auto-generated method stub
+		Instant timestamp=Instant.parse(oneMap.get("timestamp").toString());
+		System.out.println("Instant time ="+timestamp);
+		LocalDateTime dateTime=timestamp.atZone(ZoneId.systemDefault()).toLocalDateTime();
+		System.out.println("date Time"+dateTime);
+		oneMap.replace("timestamp", dateTime);
+	}
     
 }

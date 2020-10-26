@@ -130,4 +130,4 @@ application:
     druidHost: 100.64.108.25
     druidPort: 18888
     druidEndPoint: druid/v2/
-    druidAlertActivityDataSource: alert_activity
+    druidAlertActivityDataSource: alert_activity_final
