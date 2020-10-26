@@ -95,7 +95,7 @@ public class AlertController {
 				jsonObject.put("name", alert.getName());
 				jsonObject.put("action","Alert Updated");
 				jsonObject.put("action_description", "Alert Updated as "+alertState);
-				jsonObject.put("action-time", Instant.now());
+				jsonObject.put("action_time", Instant.now());
 				jsonObject.put("ticket", "");
 				jsonObject.put("ticket_description", "");
 				jsonObject.put("user", "");
@@ -104,7 +104,7 @@ public class AlertController {
 				HttpEntity<Object> requestEntity = new HttpEntity<Object>(headers);
 				UriComponentsBuilder builder = UriComponentsBuilder
 						.fromUriString("http://100.64.108.25:8190/kafka/send")
-						.queryParam("topic", "alert_activity").queryParam("msg", jsonObject.toString());
+						.queryParam("topic", "alert_activity_final").queryParam("msg", jsonObject.toString());
 				restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, String.class);
 				logger.debug("Alert updated in elasticsearch successfully");
 
