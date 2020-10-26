@@ -109,6 +109,8 @@ public class AlertController {
 				restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, String.class);
 				logger.debug("Alert activity sent to separate kafka queue : alert_activity_final");
 
+			}else {
+				logger.warn("No alert found in database. Guid : "+guid);
 			}
 
 		} catch (Exception e) {
