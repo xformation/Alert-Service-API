@@ -106,8 +106,10 @@ public class AlertController {
 				UriComponentsBuilder builder = UriComponentsBuilder
 						.fromUriString("http://100.64.108.25:8190/kafka/send")
 						.queryParam("topic", "alert_activity_final").queryParam("msg", jsonObject.toString());
-				restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, String.class);
-				logger.debug("Alert activity sent to separate kafka queue : alert_activity_final");
+//				restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, String.class);
+				logger.debug("builder.toUriString() :"+builder.toUriString());
+				String res = restTemplate.getForObject(builder.toUriString(), String.class);
+				logger.debug("Alert activity sent to separate kafka queue - alert_activity_final. Response : "+res);
 
 			}else {
 				logger.warn("No alert found in database. Guid : "+guid);
