@@ -91,7 +91,7 @@ public class AlertController {
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("guid", guid);
 				jsonObject.put("name", alert.getName());
-				jsonObject.put("action","Alert Updated");
+				jsonObject.put("action","Alert updated");
 				jsonObject.put("action_description", "Alert updated. Alert state changed to "+alertState);
 				jsonObject.put("action_time", Instant.now());
 				jsonObject.put("ticket", "");
