@@ -82,7 +82,7 @@ public class AlertController {
 				obj.put("index", "alert");
 				obj.put("searchKey", "guid");
 				obj.put("searchValue", guid);
-				obj.put("updateKey", "alertstate");
+				obj.put("updateKey", "alert_state");
 				obj.put("updateValue", alertState);
 				list = restTemplate.postForObject(applicationProperties.getSearchSrvUrl() + "/search/updateWithQuery",
 						obj, List.class);
@@ -92,16 +92,16 @@ public class AlertController {
 				jsonObject.put("guid", guid);
 				jsonObject.put("name", alert.getName());
 				jsonObject.put("action","Alert Updated");
-				jsonObject.put("action_description", "Alert Updated as "+alertState);
+				jsonObject.put("action_description", "Alert updated. Alert state changed to "+alertState);
 				jsonObject.put("action_time", Instant.now());
 				jsonObject.put("ticket", "");
 				jsonObject.put("ticket_description", "");
-				jsonObject.put("user", "");
+				jsonObject.put("user", "Admin");
 //				HttpHeaders headers = new HttpHeaders();
 //				headers.setContentType(MediaType.APPLICATION_JSON);
 //				HttpEntity<Object> requestEntity = new HttpEntity<Object>(headers);
 				UriComponentsBuilder builder = UriComponentsBuilder
-						.fromUriString("http://100.64.108.25:8190/kafka/send")
+						.fromUriString(applicationProperties.getKafkaQueueUrl())
 						.queryParam("topic", applicationProperties.getAlertActivityKafaTopic()).queryParam("msg", jsonObject.toString());
 //				restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, String.class);
 				logger.debug("Kafka URI for alert activity :"+builder.toUriString());

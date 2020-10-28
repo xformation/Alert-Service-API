@@ -132,3 +132,4 @@ application:
     druidEndPoint: druid/v2/
     druidAlertActivityDataSource: alert_activity
     alertActivityKafaTopic: alert_activity
+    kafkaQueueUrl: http://100.64.108.25:8190/kafka/send

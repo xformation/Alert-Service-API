@@ -16,7 +16,8 @@ public class ApplicationProperties {
 	private String druidEndPoint;
 	private String druidAlertActivityDataSource; 
 	private String alertActivityKafaTopic;
-
+	private String kafkaQueueUrl;
+	
 	public String getSearchSrvUrl() {
 		return searchSrvUrl;
 	}
@@ -63,6 +64,14 @@ public class ApplicationProperties {
 
 	public void setAlertActivityKafaTopic(String alertActivityKafaTopic) {
 		this.alertActivityKafaTopic = alertActivityKafaTopic;
+	}
+
+	public String getKafkaQueueUrl() {
+		return kafkaQueueUrl;
+	}
+
+	public void setKafkaQueueUrl(String kafkaQueueUrl) {
+		this.kafkaQueueUrl = kafkaQueueUrl;
 	}
 
 	
