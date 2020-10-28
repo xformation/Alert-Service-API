@@ -131,3 +131,4 @@ application:
     druidPort: 18888
     druidEndPoint: druid/v2/
     druidAlertActivityDataSource: alert_activity_ds
+    alertActivityKafaTopic: alert_activity

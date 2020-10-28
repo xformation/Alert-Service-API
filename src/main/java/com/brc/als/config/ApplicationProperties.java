@@ -15,6 +15,7 @@ public class ApplicationProperties {
 	private int druidPort;
 	private String druidEndPoint;
 	private String druidAlertActivityDataSource; 
+	private String alertActivityKafaTopic;
 
 	public String getSearchSrvUrl() {
 		return searchSrvUrl;
@@ -55,6 +56,16 @@ public class ApplicationProperties {
 	public void setDruidAlertActivityDataSource(String druidAlertActivityDataSource) {
 		this.druidAlertActivityDataSource = druidAlertActivityDataSource;
 	}
+
+	public String getAlertActivityKafaTopic() {
+		return alertActivityKafaTopic;
+	}
+
+	public void setAlertActivityKafaTopic(String alertActivityKafaTopic) {
+		this.alertActivityKafaTopic = alertActivityKafaTopic;
+	}
+
+	
 	
 }
 

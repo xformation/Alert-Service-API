@@ -15,11 +15,7 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,7 +42,7 @@ public class AlertController {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	private static final String ENTITY_NAME = "collector";
+	private static final String ENTITY_NAME = "alert";
 
 	@Value("${jhipster.clientApp.name}")
 	private String applicationName;
@@ -91,6 +87,7 @@ public class AlertController {
 				list = restTemplate.postForObject(applicationProperties.getSearchSrvUrl() + "/search/updateWithQuery",
 						obj, List.class);
 				logger.info("Alert updated in elasticsearch successfully");
+				
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("guid", guid);
 				jsonObject.put("name", alert.getName());
@@ -100,16 +97,16 @@ public class AlertController {
 				jsonObject.put("ticket", "");
 				jsonObject.put("ticket_description", "");
 				jsonObject.put("user", "");
-				HttpHeaders headers = new HttpHeaders();
-				headers.setContentType(MediaType.APPLICATION_JSON);
-				HttpEntity<Object> requestEntity = new HttpEntity<Object>(headers);
+//				HttpHeaders headers = new HttpHeaders();
+//				headers.setContentType(MediaType.APPLICATION_JSON);
+//				HttpEntity<Object> requestEntity = new HttpEntity<Object>(headers);
 				UriComponentsBuilder builder = UriComponentsBuilder
 						.fromUriString("http://100.64.108.25:8190/kafka/send")
-						.queryParam("topic", "alert_activity_final").queryParam("msg", jsonObject.toString());
+						.queryParam("topic", applicationProperties.getAlertActivityKafaTopic()).queryParam("msg", jsonObject.toString());
 //				restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, String.class);
-				logger.debug("builder.toUriString() :"+builder.toUriString());
+				logger.debug("Kafka URI for alert activity :"+builder.toUriString());
 				String res = restTemplate.getForObject(builder.toUriString(), String.class);
-				logger.debug("Alert activity sent to separate kafka queue - alert_activity_final. Response : "+res);
+				logger.debug("Alert activity sent to separate kafka topic - ."+applicationProperties.getAlertActivityKafaTopic()+" Response : "+res);
 
 			}else {
 				logger.warn("No alert found in database. Guid : "+guid);

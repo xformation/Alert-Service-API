@@ -1,6 +1,5 @@
 package com.brc.als.controller;
 
-import java.security.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -9,7 +8,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,8 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -74,7 +70,7 @@ public class AlertActivityController {
 		DruidClient client = new DruidJerseyClient(config);
 		logger.info("Request to get data from druid");
 		try {
-			LocalDate startDate=LocalDate.now().minus(10,ChronoUnit.DAYS);
+			LocalDate startDate=LocalDate.now().minus(365,ChronoUnit.DAYS);
 			LocalDate endDate=LocalDate.now().plus(1,ChronoUnit.DAYS);
 			DateTime startTime = new DateTime(startDate.getYear(), startDate.getMonthValue(), startDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
 			DateTime endTime = new DateTime(endDate.getYear(),endDate.getMonthValue(), endDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
