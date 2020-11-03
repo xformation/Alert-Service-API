@@ -1,5 +1,6 @@
 package com.brc.als.controller;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +45,16 @@ import com.brc.als.config.ApplicationProperties;
 import com.brc.als.domain.Alert;
 import com.brc.als.repository.AlertRepository;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import in.zapr.druid.druidry.client.DruidClient;
+import in.zapr.druid.druidry.client.DruidConfiguration;
+import in.zapr.druid.druidry.client.DruidJerseyClient;
+import in.zapr.druid.druidry.client.exception.ConnectionException;
+import in.zapr.druid.druidry.dataSource.TableDataSource;
+import in.zapr.druid.druidry.filter.DruidFilter;
+import in.zapr.druid.druidry.filter.SelectorFilter;
+import in.zapr.druid.druidry.query.config.Interval;
+import in.zapr.druid.druidry.query.scan.DruidScanQuery;
 
 /**
  * REST controller for managing {@link com.brc.als.domain.Alert}.
@@ -97,12 +110,12 @@ public class AlertController {
 				list = restTemplate.postForObject(applicationProperties.getSearchSrvUrl() + "/search/updateWithQuery",
 						obj, List.class);
 				logger.info("Alert updated in elasticsearch successfully");
-				
+
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("guid", guid);
 				jsonObject.put("name", alert.getName());
-				jsonObject.put("action","Alert updated");
-				jsonObject.put("action_description", "Alert updated. Alert state changed to "+alertState);
+				jsonObject.put("action", "Alert updated");
+				jsonObject.put("action_description", "Alert updated. Alert state changed to " + alertState);
 				jsonObject.put("action_time", Instant.now());
 				jsonObject.put("ticket", "");
 				jsonObject.put("ticket_description", "");
@@ -112,16 +125,17 @@ public class AlertController {
 //				HttpEntity<Object> requestEntity = new HttpEntity<Object>(headers);
 				UriComponentsBuilder builder = UriComponentsBuilder
 						.fromUriString(applicationProperties.getKafkaQueueUrl())
-						.queryParam("topic", applicationProperties.getAlertActivityKafaTopic()).queryParam("msg", jsonObject.toString());
+						.queryParam("topic", applicationProperties.getAlertActivityKafaTopic())
+						.queryParam("msg", jsonObject.toString());
 //				restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, String.class);
-				logger.debug("Kafka URI for alert activity :"+builder.toUriString());
+				logger.debug("Kafka URI for alert activity :" + builder.toUriString());
 				String res = restTemplate.getForObject(builder.toUriString(), String.class);
-				logger.debug("Alert activity sent to separate kafka topic - ."+applicationProperties.getAlertActivityKafaTopic()+" Response : "+res);
+				logger.debug("Alert activity sent to separate kafka topic - ."
+						+ applicationProperties.getAlertActivityKafaTopic() + " Response : " + res);
 
-			}else {
-				logger.warn("No alert found in database. Guid : "+guid);
+			} else {
+				logger.warn("No alert found in database. Guid : " + guid);
 			}
-
 		} catch (Exception e) {
 			logger.error("Error in updating alert: ", e);
 			list = Collections.emptyList();
@@ -129,7 +143,7 @@ public class AlertController {
 		}
 		return new ResponseEntity<>(list, HttpStatus.OK);
 	}
-
+	
 	@DeleteMapping("/deleteAlert/{guid}")
 	public ResponseEntity<Object> deleteAlert(@PathVariable String guid) {
 		logger.info("Request to delete alert. Guid : " + guid);
@@ -183,147 +197,149 @@ public class AlertController {
 		List<Alert> list = alertRepository.findAll(Sort.by(Direction.DESC, "id"));
 		return list;
 	}
+
 	@GetMapping("/topAlertToday")
-	public List<Map<String, Object>> topAlertToday(){
+	public List<Map<String, Object>> topAlertToday() {
 		logger.debug("Request to get top alerts");
 		List<Alert> selectedAlList = new ArrayList<>();
 		List<Alert> list = new ArrayList<>();
-		
+
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 		LocalDate today = LocalDate.parse(LocalDate.now().format(formatter), formatter);
-		logger.debug("Today : "+today);
-	    
+		logger.debug("Today : " + today);
+
 		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "updatedOn"));
-		for(Alert al: allAlList) {
+		for (Alert al : allAlList) {
 			LocalDate laDate = LocalDateTime.ofInstant(al.getUpdatedOn(), ZoneOffset.UTC).toLocalDate();
-			logger.debug("Alert date : "+laDate);
-			if(laDate.equals(today)) {
+			logger.debug("Alert date : " + laDate);
+			if (laDate.equals(today)) {
 				list.add(al);
 			}
 		}
-		for(Alert al: list) {
-	    	if(al.getSeverity().equalsIgnoreCase("Urgent")) {
-	    		selectedAlList.add(al);
-	    		break;
-	    	}
-	    }
-	    for(Alert al: list) {
-	    	if(al.getSeverity().equalsIgnoreCase("Critical")) {
-	    		selectedAlList.add(al);
-	    		break;
-	    	}
-	    }
-	    for(Alert al: list) {
-	    	if(al.getSeverity().equalsIgnoreCase("High")) {
-	    		selectedAlList.add(al);
-	    		break;
-	    	}
-	    }
-	    for(Alert al: list) {
-	    	if(al.getSeverity().equalsIgnoreCase("Medium")) {
-	    		selectedAlList.add(al);
-	    		break;
-	    	}
-	    }
-	    for(Alert al: list) {
-	    	if(al.getSeverity().equalsIgnoreCase("Low")) {
-	    		selectedAlList.add(al);
-	    		break;
-	    	}
-	    }
-	    Comparator<Alert> comparator = new Comparator<Alert>() {
+		for (Alert al : list) {
+			if (al.getSeverity().equalsIgnoreCase("Urgent")) {
+				selectedAlList.add(al);
+				break;
+			}
+		}
+		for (Alert al : list) {
+			if (al.getSeverity().equalsIgnoreCase("Critical")) {
+				selectedAlList.add(al);
+				break;
+			}
+		}
+		for (Alert al : list) {
+			if (al.getSeverity().equalsIgnoreCase("High")) {
+				selectedAlList.add(al);
+				break;
+			}
+		}
+		for (Alert al : list) {
+			if (al.getSeverity().equalsIgnoreCase("Medium")) {
+				selectedAlList.add(al);
+				break;
+			}
+		}
+		for (Alert al : list) {
+			if (al.getSeverity().equalsIgnoreCase("Low")) {
+				selectedAlList.add(al);
+				break;
+			}
+		}
+		Comparator<Alert> comparator = new Comparator<Alert>() {
 			@Override
 			public int compare(Alert a1, Alert a2) {
 				// TODO Auto-generated method stub
-				Instant updatedOnDate1 =a1.getUpdatedOn();
-				Instant updatedOnDate2 =a2.getUpdatedOn();
+				Instant updatedOnDate1 = a1.getUpdatedOn();
+				Instant updatedOnDate2 = a2.getUpdatedOn();
 				return updatedOnDate2.compareTo(updatedOnDate1);
 			}
 		};
 		Collections.sort(selectedAlList, comparator);
-		List<Map<String, Object>> mapList=new ArrayList<Map<String,Object>>();
-	    for (Alert alert : selectedAlList) {
-			Map<String, Object> map=new HashMap<String, Object>();
+		List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>();
+		for (Alert alert : selectedAlList) {
+			Map<String, Object> map = new HashMap<String, Object>();
 			map.put("name", alert.getName());
 			map.put("severity", alert.getSeverity());
-			map.put("time",ChronoUnit.MINUTES.between(alert.getUpdatedOn(),Instant.now()) );
+			map.put("time", ChronoUnit.MINUTES.between(alert.getUpdatedOn(), Instant.now()));
 			mapList.add(map);
 		}
 		return mapList;
 	}
+
 	@GetMapping("/getAlertVolumeData")
-	public Map<String, Object> getAlertVolumeData(){
+	public Map<String, Object> getAlertVolumeData() {
 		logger.debug("Request to get top alerts");
 		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "createdOn"));
-		List<Alert> last6DayAlerts=new ArrayList<Alert>();
+		List<Alert> last6DayAlerts = new ArrayList<Alert>();
 		for (Alert alert : allAlList) {
-			if(alert.getCreatedOn().isAfter(Instant.now().minus(5,ChronoUnit.DAYS))) {
+			if (alert.getCreatedOn().isAfter(Instant.now().minus(5, ChronoUnit.DAYS))) {
 				last6DayAlerts.add(alert);
-			}else {
+			} else {
 				break;
 			}
 		}
-		Map<String, Object> map=new HashMap<String, Object>();
-		int totalClosedAlert=0;
-		int totalNewAlert=0;
-		List<Integer> dailyNewAlertList=Arrays.asList(0,0,0,0,0,0);
-		List<Integer> dailyClosedAlertList=Arrays.asList(0,0,0,0,0,0);
-		LocalDate today=LocalDate.now();
-		List<Integer> daysList=new ArrayList<Integer>();
-		daysList.add(today.getDayOfMonth());
-		daysList.add(today.minus(1,ChronoUnit.DAYS).getDayOfMonth());
-		daysList.add(today.minus(2,ChronoUnit.DAYS).getDayOfMonth());
-		daysList.add(today.minus(3,ChronoUnit.DAYS).getDayOfMonth());
-		daysList.add(today.minus(4,ChronoUnit.DAYS).getDayOfMonth());
-		daysList.add(today.minus(5,ChronoUnit.DAYS).getDayOfMonth());
-		for(Alert alert: last6DayAlerts) {
-			LocalDate createDate=alert.getCreatedOn().atZone(ZoneId.systemDefault()).toLocalDate();
-			if(createDate.equals(today)) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(0, dailyNewAlertList.get(0)+1);
+		Map<String, Object> map = new HashMap<String, Object>();
+		int totalClosedAlert = 0;
+		int totalNewAlert = 0;
+		List<Integer> dailyNewAlertList = Arrays.asList(0, 0, 0, 0, 0, 0);
+		List<Integer> dailyClosedAlertList = Arrays.asList(0, 0, 0, 0, 0, 0);
+		LocalDate today = LocalDate.now();
+		List<LocalDate> daysList = new ArrayList<LocalDate>();
+		daysList.add(today);
+		daysList.add(today.minus(1, ChronoUnit.DAYS));
+		daysList.add(today.minus(2, ChronoUnit.DAYS));
+		daysList.add(today.minus(3, ChronoUnit.DAYS));
+		daysList.add(today.minus(4, ChronoUnit.DAYS));
+		daysList.add(today.minus(5, ChronoUnit.DAYS));
+		for (Alert alert : last6DayAlerts) {
+			LocalDate createDate = alert.getCreatedOn().atZone(ZoneId.systemDefault()).toLocalDate();
+			if (createDate.equals(today)) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(0, dailyNewAlertList.get(0) + 1);
 					totalNewAlert++;
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(0, dailyClosedAlertList.get(0)+1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(0, dailyClosedAlertList.get(0) + 1);
 					totalClosedAlert++;
 				}
-			}else if(createDate.equals(today.minus(1,ChronoUnit.DAYS))) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(1, dailyNewAlertList.get(1)+1);
+			} else if (createDate.equals(today.minus(1, ChronoUnit.DAYS))) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(1, dailyNewAlertList.get(1) + 1);
 					totalNewAlert++;
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(1, dailyClosedAlertList.get(1)+1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(1, dailyClosedAlertList.get(1) + 1);
 					totalClosedAlert++;
 				}
-			}else if(createDate.equals(today.minus(2,ChronoUnit.DAYS))) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(2, dailyNewAlertList.get(2)+1);
+			} else if (createDate.equals(today.minus(2, ChronoUnit.DAYS))) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(2, dailyNewAlertList.get(2) + 1);
 					totalNewAlert++;
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(2, dailyClosedAlertList.get(2)+1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(2, dailyClosedAlertList.get(2) + 1);
 					totalClosedAlert++;
 				}
-			}else if(createDate.equals(today.minus(3,ChronoUnit.DAYS))) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(3, dailyNewAlertList.get(3)+1);
+			} else if (createDate.equals(today.minus(3, ChronoUnit.DAYS))) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(3, dailyNewAlertList.get(3) + 1);
 					totalNewAlert++;
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(3, dailyClosedAlertList.get(3)+1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(3, dailyClosedAlertList.get(3) + 1);
 					totalClosedAlert++;
 				}
-			}else if(createDate.equals(today.minus(4,ChronoUnit.DAYS))) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(4, dailyNewAlertList.get(4)+1);
+			} else if (createDate.equals(today.minus(4, ChronoUnit.DAYS))) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(4, dailyNewAlertList.get(4) + 1);
 					totalNewAlert++;
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(4, dailyClosedAlertList.get(4)+1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(4, dailyClosedAlertList.get(4) + 1);
 					totalClosedAlert++;
 				}
-			}else if(createDate.equals(today.minus(5,ChronoUnit.DAYS))) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(5, dailyNewAlertList.get(5)+1);
+			} else if (createDate.equals(today.minus(5, ChronoUnit.DAYS))) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(5, dailyNewAlertList.get(5) + 1);
 					totalNewAlert++;
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(5, dailyClosedAlertList.get(5)+1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(5, dailyClosedAlertList.get(5) + 1);
 					totalClosedAlert++;
 				}
 			}
@@ -335,84 +351,167 @@ public class AlertController {
 		map.put("daysList", daysList);
 		return map;
 	}
-	@GetMapping("/getAlertVolumeByStatus")
-	public Map<String, Object> getAlertVolumeByStatus(){
-		logger.debug("Request to get alert Volume by status");
+
+	@GetMapping("/getAverageResponseTimeGraphData")
+	public Map<String, Object> getAverageResponseTimeGraphData() {
+		logger.debug("Request to get Average Response Time graph data");
 		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "createdOn"));
-		List<Alert> last6DayAlerts=new ArrayList<Alert>();
+		List<Alert> last6DayAlerts = new ArrayList<Alert>();
 		for (Alert alert : allAlList) {
-			if(alert.getCreatedOn().isAfter(Instant.now().minus(5,ChronoUnit.DAYS))) {
+			if (alert.getCreatedOn().isAfter(Instant.now().minus(5, ChronoUnit.DAYS))) {
 				last6DayAlerts.add(alert);
-			}else {
+			} else {
 				break;
 			}
 		}
-		Map<String, Object> map=new HashMap<String, Object>();
-		
-		List<Integer> dailyNewAlertList=Arrays.asList(0,0,0,0,0,0);
-		List<Integer> dailyClosedAlertList=Arrays.asList(0,0,0,0,0,0);
-		List<Integer> dailyInProgressAlertList=Arrays.asList(0,0,0,0,0,0);
-		LocalDate today=LocalDate.now();
-		List<Integer> daysList=new ArrayList<Integer>();
-		daysList.add(today.getDayOfMonth());
-		daysList.add(today.minus(1,ChronoUnit.DAYS).getDayOfMonth());
-		daysList.add(today.minus(2,ChronoUnit.DAYS).getDayOfMonth());
-		daysList.add(today.minus(3,ChronoUnit.DAYS).getDayOfMonth());
-		daysList.add(today.minus(4,ChronoUnit.DAYS).getDayOfMonth());
-		daysList.add(today.minus(5,ChronoUnit.DAYS).getDayOfMonth());
-		for(Alert alert: last6DayAlerts) {
-			LocalDate createDate=alert.getCreatedOn().atZone(ZoneId.systemDefault()).toLocalDate();
-			if(createDate.equals(today)) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(0, dailyNewAlertList.get(0)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(0, dailyClosedAlertList.get(0)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("InProgress")) {
-					dailyInProgressAlertList.set(0, dailyInProgressAlertList.get(0)+1);
+		Map<String, Object> map = new HashMap<String, Object>();
+
+		List<Integer> dailyNewAlertList = Arrays.asList(0, 0, 0, 0, 0, 0);
+		List<Integer> dailyClosedAlertList = Arrays.asList(0, 0, 0, 0, 0, 0);
+		List<Integer> dailyInProgressAlertList = Arrays.asList(0, 0, 0, 0, 0, 0);
+
+		List<Float> graphDataList = new ArrayList<Float>();
+		LocalDate today = LocalDate.now();
+		List<LocalDate> daysList = new ArrayList<LocalDate>();
+		daysList.add(today);
+		daysList.add(today.minus(1, ChronoUnit.DAYS));
+		daysList.add(today.minus(2, ChronoUnit.DAYS));
+		daysList.add(today.minus(3, ChronoUnit.DAYS));
+		daysList.add(today.minus(4, ChronoUnit.DAYS));
+		daysList.add(today.minus(5, ChronoUnit.DAYS));
+		List<Double> totalTimeDurationList = Arrays.asList(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+		List<Integer> recordCountList = Arrays.asList(0, 0, 0, 0, 0, 0);
+		for (Alert alert : last6DayAlerts) {
+			LocalDate createDate = alert.getCreatedOn().atZone(ZoneId.systemDefault()).toLocalDate();
+			Duration timeDuration = Duration.between(alert.getCreatedOn(), alert.getUpdatedOn());
+			if (createDate.equals(today)) {
+				double timeDurationInHours = (double) (timeDuration.getSeconds()) / (60 * 60);
+				totalTimeDurationList.set(0, totalTimeDurationList.get(0) + timeDurationInHours);
+				recordCountList.set(0, recordCountList.get(0) + 1);
+			} else if (createDate.equals(today.minus(1, ChronoUnit.DAYS))) {
+				double timeDurationInHours = (double) (timeDuration.getSeconds()) / (60 * 60);
+				totalTimeDurationList.set(1, totalTimeDurationList.get(1) + timeDurationInHours);
+				recordCountList.set(1, recordCountList.get(1) + 1);
+			} else if (createDate.equals(today.minus(2, ChronoUnit.DAYS))) {
+				double timeDurationInHours = (double) (timeDuration.getSeconds()) / (60 * 60);
+				totalTimeDurationList.set(2, totalTimeDurationList.get(2) + timeDurationInHours);
+				recordCountList.set(2, recordCountList.get(2) + 1);
+			} else if (createDate.equals(today.minus(3, ChronoUnit.DAYS))) {
+				double timeDurationInHours = (double) (timeDuration.getSeconds()) / (60 * 60);
+				totalTimeDurationList.set(3, totalTimeDurationList.get(3) + timeDurationInHours);
+				recordCountList.set(3, recordCountList.get(3) + 1);
+			} else if (createDate.equals(today.minus(4, ChronoUnit.DAYS))) {
+				double timeDurationInHours = (double) (timeDuration.getSeconds()) / (60 * 60);
+				totalTimeDurationList.set(4, totalTimeDurationList.get(4) + timeDurationInHours);
+				recordCountList.set(4, recordCountList.get(4) + 1);
+			} else if (createDate.equals(today.minus(5, ChronoUnit.DAYS))) {
+				double timeDurationInHours = (double) (timeDuration.getSeconds()) / (60 * 60);
+				totalTimeDurationList.set(5, totalTimeDurationList.get(5) + timeDurationInHours);
+				recordCountList.set(5, recordCountList.get(5) + 1);
+			}
+		}
+		List<Double> timeDurationAvgList = Arrays.asList(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+		if (recordCountList.get(0)>0) {
+			timeDurationAvgList.set(0, (totalTimeDurationList.get(0) / recordCountList.get(0)));
+		}
+		if (recordCountList.get(1)>0) {
+			timeDurationAvgList.set(1, (totalTimeDurationList.get(1) / recordCountList.get(1)));
+		}
+		if (recordCountList.get(2)>0) {
+			timeDurationAvgList.set(2, (totalTimeDurationList.get(2) / recordCountList.get(2)));
+		}
+		if (recordCountList.get(3)>0) {
+			timeDurationAvgList.set(3, (totalTimeDurationList.get(3) / recordCountList.get(3)));
+		}
+		if (recordCountList.get(4)>0) {
+			timeDurationAvgList.set(4, (totalTimeDurationList.get(4) / recordCountList.get(4)));
+		}
+		if (recordCountList.get(5)>0) {
+			timeDurationAvgList.set(5, (totalTimeDurationList.get(5) / recordCountList.get(5)));
+		}
+		map.put("timeDurationAvgList", timeDurationAvgList);
+		map.put("daysList", daysList);
+		return map;
+	}
+
+	@GetMapping("/getAlertVolumeByStatus")
+	public Map<String, Object> getAlertVolumeByStatus() {
+		logger.debug("Request to get alert Volume by status");
+		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "createdOn"));
+		List<Alert> last6DayAlerts = new ArrayList<Alert>();
+		for (Alert alert : allAlList) {
+			if (alert.getCreatedOn().isAfter(Instant.now().minus(5, ChronoUnit.DAYS))) {
+				last6DayAlerts.add(alert);
+			} else {
+				break;
+			}
+		}
+		Map<String, Object> map = new HashMap<String, Object>();
+
+		List<Integer> dailyNewAlertList = Arrays.asList(0, 0, 0, 0, 0, 0);
+		List<Integer> dailyClosedAlertList = Arrays.asList(0, 0, 0, 0, 0, 0);
+		List<Integer> dailyInProgressAlertList = Arrays.asList(0, 0, 0, 0, 0, 0);
+		LocalDate today = LocalDate.now();
+		List<LocalDate> daysList = new ArrayList<LocalDate>();
+		daysList.add(today);
+		daysList.add(today.minus(1, ChronoUnit.DAYS));
+		daysList.add(today.minus(2, ChronoUnit.DAYS));
+		daysList.add(today.minus(3, ChronoUnit.DAYS));
+		daysList.add(today.minus(4, ChronoUnit.DAYS));
+		daysList.add(today.minus(5, ChronoUnit.DAYS));
+		for (Alert alert : last6DayAlerts) {
+			LocalDate createDate = alert.getCreatedOn().atZone(ZoneId.systemDefault()).toLocalDate();
+			if (createDate.equals(today)) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(0, dailyNewAlertList.get(0) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(0, dailyClosedAlertList.get(0) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("InProgress")) {
+					dailyInProgressAlertList.set(0, dailyInProgressAlertList.get(0) + 1);
 				}
-			}else if(createDate.equals(today.minus(1,ChronoUnit.DAYS))) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(1, dailyNewAlertList.get(1)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(1, dailyClosedAlertList.get(1)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("InProgress")) {
-					dailyInProgressAlertList.set(1, dailyInProgressAlertList.get(1)+1);
+			} else if (createDate.equals(today.minus(1, ChronoUnit.DAYS))) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(1, dailyNewAlertList.get(1) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(1, dailyClosedAlertList.get(1) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("InProgress")) {
+					dailyInProgressAlertList.set(1, dailyInProgressAlertList.get(1) + 1);
 				}
-			}else if(createDate.equals(today.minus(2,ChronoUnit.DAYS))) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(2, dailyNewAlertList.get(2)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(2, dailyClosedAlertList.get(2)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("InProgress")) {
-					dailyInProgressAlertList.set(2, dailyInProgressAlertList.get(2)+1);
+			} else if (createDate.equals(today.minus(2, ChronoUnit.DAYS))) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(2, dailyNewAlertList.get(2) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(2, dailyClosedAlertList.get(2) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("InProgress")) {
+					dailyInProgressAlertList.set(2, dailyInProgressAlertList.get(2) + 1);
 				}
-			}else if(createDate.equals(today.minus(3,ChronoUnit.DAYS))) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(3, dailyNewAlertList.get(3)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(3, dailyClosedAlertList.get(3)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("InProgress")) {
-					dailyInProgressAlertList.set(3, dailyInProgressAlertList.get(3)+1);
+			} else if (createDate.equals(today.minus(3, ChronoUnit.DAYS))) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(3, dailyNewAlertList.get(3) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(3, dailyClosedAlertList.get(3) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("InProgress")) {
+					dailyInProgressAlertList.set(3, dailyInProgressAlertList.get(3) + 1);
 				}
-			}else if(createDate.equals(today.minus(4,ChronoUnit.DAYS))) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(4, dailyNewAlertList.get(4)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(4, dailyClosedAlertList.get(4)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("InProgress")) {
-					dailyInProgressAlertList.set(4, dailyInProgressAlertList.get(4)+1);
+			} else if (createDate.equals(today.minus(4, ChronoUnit.DAYS))) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(4, dailyNewAlertList.get(4) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(4, dailyClosedAlertList.get(4) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("InProgress")) {
+					dailyInProgressAlertList.set(4, dailyInProgressAlertList.get(4) + 1);
 				}
-			}else if(createDate.equals(today.minus(5,ChronoUnit.DAYS))) {
-				if(alert.getAlertState().equalsIgnoreCase("New")) {
-					dailyNewAlertList.set(5, dailyNewAlertList.get(5)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("Closed")) {
-					dailyClosedAlertList.set(5, dailyClosedAlertList.get(5)+1);
-				}else if(alert.getAlertState().equalsIgnoreCase("InProgress")) {
-					dailyInProgressAlertList.set(5, dailyInProgressAlertList.get(5)+1);
+			} else if (createDate.equals(today.minus(5, ChronoUnit.DAYS))) {
+				if (alert.getAlertState().equalsIgnoreCase("New")) {
+					dailyNewAlertList.set(5, dailyNewAlertList.get(5) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("Closed")) {
+					dailyClosedAlertList.set(5, dailyClosedAlertList.get(5) + 1);
+				} else if (alert.getAlertState().equalsIgnoreCase("InProgress")) {
+					dailyInProgressAlertList.set(5, dailyInProgressAlertList.get(5) + 1);
 				}
 			}
 		}
-		map.put("inProgressList",dailyInProgressAlertList);
+		map.put("inProgressList", dailyInProgressAlertList);
 		map.put("newAlertList", dailyNewAlertList);
 		map.put("closedAlertList", dailyClosedAlertList);
 		map.put("daysList", daysList);
