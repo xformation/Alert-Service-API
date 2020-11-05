@@ -126,10 +126,15 @@ jhipster:
 
 # application:
 application:
-    searchSrvUrl: http://100.64.108.25:8092
-    druidHost: 100.64.108.25
-    druidPort: 18888
+    searchSrvUrl: http://localhost:8092
+#    druidHost: 100.64.108.25
+    druidHost: localhost
+#    druidPort: 18888
+    druidPort: 8888
     druidEndPoint: druid/v2/
     druidAlertActivityDataSource: alert_activity
     alertActivityKafaTopic: alert_activity
-    kafkaQueueUrl: http://100.64.108.25:8190/kafka/send
+    kafkaQueueUrl: http://localhost:8190/kafka/send
+    responseTimeKafkaTopic: response_time
+    druidResponseTimeDataSource: response_time_datasourse
+    

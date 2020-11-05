@@ -75,6 +75,9 @@ public class AlertController {
 
 	@Autowired
 	RestTemplate restTemplate;
+	
+	@Autowired
+	AlertActivityController alertActivityController;
 
 	/**
 	 * {@code POST  /updateAlert} : update an entry in alert.
@@ -98,6 +101,7 @@ public class AlertController {
 			if (oa.isPresent()) {
 				Alert alert = oa.get();
 				alert.setAlertState(alertState);
+				alert.setUpdatedOn(Instant.now());
 				alert = alertRepository.save(alert);
 				logger.info("Alert updated in db successfully");
 
@@ -107,10 +111,45 @@ public class AlertController {
 				obj.put("searchValue", guid);
 				obj.put("updateKey", "alert_state");
 				obj.put("updateValue", alertState);
+				try {
 				list = restTemplate.postForObject(applicationProperties.getSearchSrvUrl() + "/search/updateWithQuery",
 						obj, List.class);
 				logger.info("Alert updated in elasticsearch successfully");
-
+				}catch (Exception e) {
+					// TODO: handle exception
+					
+				}
+				/* first updated code */
+				AlertActivityController alertActivityController= AlertserviceApp.getBean(AlertActivityController.class);
+				List<Map> firstRespData= list = alertActivityController.getDataFromFirstResp();
+			   boolean	guidAvailableInFirstRespFlag=false;
+				for(Map map: firstRespData) {
+					String mapGuid=(String)map.get("guid");
+					if(mapGuid.equalsIgnoreCase(guid)) {
+						guidAvailableInFirstRespFlag=true;
+					}
+				}
+				if(!guidAvailableInFirstRespFlag) {
+					JSONObject firstRespJsonObject = new JSONObject();
+					firstRespJsonObject.put("guid", guid);
+					firstRespJsonObject.put("name", alert.getName());
+					firstRespJsonObject.put("type", "alert");
+					firstRespJsonObject.put("createdon", alert.getCreatedOn());
+					firstRespJsonObject.put("updatedon", alert.getUpdatedOn());
+					firstRespJsonObject.put("user", "Automated");
+					UriComponentsBuilder builder = UriComponentsBuilder
+							.fromUriString(applicationProperties.getKafkaQueueUrl())
+							.queryParam("topic", applicationProperties.getResponseTimeKafkaTopic())
+							.queryParam("msg", firstRespJsonObject.toString());
+//					restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, String.class);
+					logger.debug("Kafka URI for  first response :" + builder.toUriString());
+					String res = restTemplate.getForObject(builder.toUriString(), String.class);
+					logger.debug("Alert update sent to separate kafka topic - ."
+							+ applicationProperties.getResponseTimeKafkaTopic() + " Response : " + res);
+				}
+				/* first updated code */
+				
+				/* send data to alert_activity kafka topic code */
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("guid", guid);
 				jsonObject.put("name", alert.getName());
@@ -119,7 +158,7 @@ public class AlertController {
 				jsonObject.put("action_time", Instant.now());
 				jsonObject.put("ticket", "");
 				jsonObject.put("ticket_description", "");
-				jsonObject.put("user", "Admin");
+				jsonObject.put("user", "Automated");
 //				HttpHeaders headers = new HttpHeaders();
 //				headers.setContentType(MediaType.APPLICATION_JSON);
 //				HttpEntity<Object> requestEntity = new HttpEntity<Object>(headers);
@@ -132,7 +171,7 @@ public class AlertController {
 				String res = restTemplate.getForObject(builder.toUriString(), String.class);
 				logger.debug("Alert activity sent to separate kafka topic - ."
 						+ applicationProperties.getAlertActivityKafaTopic() + " Response : " + res);
-
+				/* send data to alert_activity kafka topic code */
 			} else {
 				logger.warn("No alert found in database. Guid : " + guid);
 			}
