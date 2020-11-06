@@ -150,13 +150,6 @@ public class AlertActivityController {
 			logger.error("Exception in getting data from druid. Returning empty list : ", e);
 			return Collections.emptyList();
 		}
-//		finally {
-//			try {
-//				client.close();
-//			}catch(ConnectionException ce) {
-//				logger.error("Exception in closing druid client connection: ", ce);
-//			}
-//		}
 		return listData;
     }
     @GetMapping("/getDataFromFirstResp")
@@ -165,9 +158,6 @@ public class AlertActivityController {
 		List<Map> list=new ArrayList<Map>();
 		List<Map> listData=new ArrayList<Map>();
 		DruidClient client = synDruidClient.client(ap); 
-//		DruidConfiguration config = DruidConfiguration.builder().host("100.64.108.25").port(18888).endpoint("druid/v2/").build();
-//		DruidConfiguration config = DruidConfiguration.builder().host("localhost").port(8888).endpoint("druid/v2/").build();
-//		DruidClient client = new DruidJerseyClient(config);
 		logger.info("Request to get first_response data from druid. : ");
 		try {
 			LocalDate startDate=LocalDate.now().minus(2,ChronoUnit.YEARS);
@@ -193,33 +183,76 @@ public class AlertActivityController {
 				}
 			};
 			Collections.sort(listData, mapComparator);
-//			listData.forEach(oneMap -> repalceTimeStamp(oneMap));
 			logger.debug("Total record retrived from druid : "+list.size());
 		}catch (Exception e) {
 			logger.error("Exception in getting data from druid. Returning empty list : ", e);
 			return Collections.emptyList();
 		}
-//		finally {
-//			try {
-//				client.close();
-//			}catch(ConnectionException ce) {
-//				logger.error("Exception in closing druid client connection: ", ce);
-//			}
-//		}
 		return listData;
     }
     @GetMapping("/getAvgResponseTime")
     public Map<String,Object> getAvgResponseTime(){
     	List<Map> firstRespData=getDataFromFirstResp();
-    	LocalDate today=LocalDate.now();
+    	Map map=getLineGraphData(firstRespData);
+		return map;
+    	
+    }
+    @GetMapping("/getWaitTimeDataAlertStateClosed")
+   	public  List<Map> getWaitTimeDataAlertStateClosed(){
+    	ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
+		List<Map> list=new ArrayList<Map>();
+		List<Map> listData=new ArrayList<Map>();
+		DruidClient client = synDruidClient.client(ap); 
+		logger.info("Request to get wait_time data from druid. : ");
+		try {
+			LocalDate startDate=LocalDate.now().minus(2,ChronoUnit.YEARS);
+			LocalDate endDate=LocalDate.now().plus(1,ChronoUnit.DAYS);
+			DateTime startTime = new DateTime(startDate.getYear(), startDate.getMonthValue(), startDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
+			DateTime endTime = new DateTime(endDate.getYear(),endDate.getMonthValue(), endDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
+			Interval interval = new Interval(startTime, endTime);
+			DruidFilter filter = new SelectorFilter("alert_state","Closed");
+			DruidScanQuery query = DruidScanQuery.builder().dataSource(new TableDataSource(ap.getDruidWaitTimeDatasource()))
+					.intervals(Collections.singletonList(interval))
+					.filter(filter)
+					.batchSize(10000).limit(1000L).legacy(true).build();
+			client.connect();
+			list= client.query(query,Map.class);
+			for(Map map: list) {
+				List<Map> eventList= (List<Map>) map.get("events");
+				listData.addAll(eventList);
+			}
+			Comparator<Map> mapComparator = new Comparator<Map>() {
+				@Override
+				public int compare(Map m1, Map m2) {
+					Instant val1 = Instant.parse(m1.get("timestamp").toString());
+					Instant val2 = Instant.parse(m2.get("timestamp").toString());
+					return val2.compareTo(val1);
+				}
+			};
+			Collections.sort(listData, mapComparator);
+			logger.debug("Total record retrived from druid : "+list.size());
+		}catch (Exception e) {
+			logger.error("Exception in getting data from druid. Returning empty list : ", e);
+			return Collections.emptyList();
+		}
+		return listData;
+    }
+    @GetMapping("/getWaitTimeGraphData")
+    public Map<String,Object> getWaitTimeGraphData(){
+    	List<Map> mapData=getWaitTimeDataAlertStateClosed();
+    	Map map=getLineGraphData(mapData);
+    	 return map;   	
+    }
+    public Map getLineGraphData(List<Map> mapData) {
     	List<LocalDate> daysList = new ArrayList<LocalDate>();
+    	LocalDate today=LocalDate.now();
 		daysList.add(today);
 		daysList.add(today.minus(1, ChronoUnit.DAYS));
 		daysList.add(today.minus(2, ChronoUnit.DAYS));
 		daysList.add(today.minus(3, ChronoUnit.DAYS));
 		List<Double> totalTimeDurationList = Arrays.asList(0.0, 0.0, 0.0, 0.0);
 		List<Integer> recordCountList = Arrays.asList(0, 0, 0, 0);
-    	for(Map map:firstRespData) {
+    	for(Map map:mapData) {
     		Instant timestamp=Instant.parse(map.get("timestamp").toString());
     		Instant createdTimestamp=Instant.parse(map.get("createdon").toString());
     		LocalDate updatedDate=timestamp.atZone(ZoneId.systemDefault()).toLocalDate();
@@ -257,7 +290,6 @@ public class AlertActivityController {
 		map.put("lineDataSetList", timeDurationAvgList);
 		map.put("daysList", daysList);
 		return map;
-    	
     }
     
 	public static void repalceTimeStamp(Map oneMap) {
@@ -267,5 +299,6 @@ public class AlertActivityController {
 		logger.debug("Instant converted to LocalDateTime: "+dateTime);
 		oneMap.replace("timestamp", dateTime);
 	}
+	
     
 }

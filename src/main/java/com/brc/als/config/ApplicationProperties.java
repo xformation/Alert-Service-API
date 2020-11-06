@@ -19,6 +19,8 @@ public class ApplicationProperties {
 	private String kafkaQueueUrl;
 	private String responseTimeKafkaTopic;
 	private String druidResponseTimeDataSource;
+	private String waitTimeKafkaTopic;
+	private String druidWaitTimeDatasource;
 	
 	public String getSearchSrvUrl() {
 		return searchSrvUrl;
@@ -90,6 +92,22 @@ public class ApplicationProperties {
 
 	public void setDruidResponseTimeDataSource(String druidResponseTimeDataSource) {
 		this.druidResponseTimeDataSource = druidResponseTimeDataSource;
+	}
+
+	public String getWaitTimeKafkaTopic() {
+		return waitTimeKafkaTopic;
+	}
+
+	public void setWaitTimeKafkaTopic(String waitTimeKafkaTopic) {
+		this.waitTimeKafkaTopic = waitTimeKafkaTopic;
+	}
+
+	public String getDruidWaitTimeDatasource() {
+		return druidWaitTimeDatasource;
+	}
+
+	public void setDruidWaitTimeDatasource(String druidWaitTimeDatasource) {
+		this.druidWaitTimeDatasource = druidWaitTimeDatasource;
 	}
 	
 	

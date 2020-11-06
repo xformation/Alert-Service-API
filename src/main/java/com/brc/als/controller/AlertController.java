@@ -75,7 +75,7 @@ public class AlertController {
 
 	@Autowired
 	RestTemplate restTemplate;
-	
+
 	@Autowired
 	AlertActivityController alertActivityController;
 
@@ -112,24 +112,25 @@ public class AlertController {
 				obj.put("updateKey", "alert_state");
 				obj.put("updateValue", alertState);
 				try {
-				list = restTemplate.postForObject(applicationProperties.getSearchSrvUrl() + "/search/updateWithQuery",
-						obj, List.class);
-				logger.info("Alert updated in elasticsearch successfully");
-				}catch (Exception e) {
+					list = restTemplate.postForObject(
+							applicationProperties.getSearchSrvUrl() + "/search/updateWithQuery", obj, List.class);
+					logger.info("Alert updated in elasticsearch successfully");
+				} catch (Exception e) {
 					// TODO: handle exception
-					
+
 				}
 				/* first updated code */
-				AlertActivityController alertActivityController= AlertserviceApp.getBean(AlertActivityController.class);
-				List<Map> firstRespData= list = alertActivityController.getDataFromFirstResp();
-			   boolean	guidAvailableInFirstRespFlag=false;
-				for(Map map: firstRespData) {
-					String mapGuid=(String)map.get("guid");
-					if(mapGuid.equalsIgnoreCase(guid)) {
-						guidAvailableInFirstRespFlag=true;
+				AlertActivityController alertActivityController = AlertserviceApp
+						.getBean(AlertActivityController.class);
+				List<Map> firstRespData = list = alertActivityController.getDataFromFirstResp();
+				boolean guidAvailableInFirstRespFlag = false;
+				for (Map map : firstRespData) {
+					String mapGuid = (String) map.get("guid");
+					if (mapGuid.equalsIgnoreCase(guid)) {
+						guidAvailableInFirstRespFlag = true;
 					}
 				}
-				if(!guidAvailableInFirstRespFlag) {
+				if (!guidAvailableInFirstRespFlag) {
 					JSONObject firstRespJsonObject = new JSONObject();
 					firstRespJsonObject.put("guid", guid);
 					firstRespJsonObject.put("name", alert.getName());
@@ -141,14 +142,35 @@ public class AlertController {
 							.fromUriString(applicationProperties.getKafkaQueueUrl())
 							.queryParam("topic", applicationProperties.getResponseTimeKafkaTopic())
 							.queryParam("msg", firstRespJsonObject.toString());
-//					restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, String.class);
 					logger.debug("Kafka URI for  first response :" + builder.toUriString());
 					String res = restTemplate.getForObject(builder.toUriString(), String.class);
 					logger.debug("Alert update sent to separate kafka topic - ."
 							+ applicationProperties.getResponseTimeKafkaTopic() + " Response : " + res);
 				}
 				/* first updated code */
-				
+
+				/* wait time code */
+				{
+					JSONObject waitTimeJsonObject = new JSONObject();
+					waitTimeJsonObject.put("guid", guid);
+					waitTimeJsonObject.put("name", alert.getName());
+					waitTimeJsonObject.put("type", "alert");
+					waitTimeJsonObject.put("createdon", alert.getCreatedOn());
+					waitTimeJsonObject.put("updatedon", alert.getUpdatedOn());
+					waitTimeJsonObject.put("user", "Automated");
+					waitTimeJsonObject.put("alert_state", alert.getAlertState());
+					UriComponentsBuilder builder = UriComponentsBuilder
+							.fromUriString(applicationProperties.getKafkaQueueUrl())
+							.queryParam("topic", applicationProperties.getWaitTimeKafkaTopic())
+							.queryParam("msg", waitTimeJsonObject.toString());
+					logger.debug("Kafka URI for  first response :" + builder.toUriString());
+					String res = restTemplate.getForObject(builder.toUriString(), String.class);
+					logger.debug("Alert update sent to separate kafka topic - ."
+							+ applicationProperties.getWaitTimeKafkaTopic() + " Response : " + res);
+
+				}
+				/* wait time code */
+
 				/* send data to alert_activity kafka topic code */
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("guid", guid);
@@ -182,7 +204,7 @@ public class AlertController {
 		}
 		return new ResponseEntity<>(list, HttpStatus.OK);
 	}
-	
+
 	@DeleteMapping("/deleteAlert/{guid}")
 	public ResponseEntity<Object> deleteAlert(@PathVariable String guid) {
 		logger.info("Request to delete alert. Guid : " + guid);
@@ -450,22 +472,22 @@ public class AlertController {
 			}
 		}
 		List<Double> timeDurationAvgList = Arrays.asList(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-		if (recordCountList.get(0)>0) {
+		if (recordCountList.get(0) > 0) {
 			timeDurationAvgList.set(0, (totalTimeDurationList.get(0) / recordCountList.get(0)));
 		}
-		if (recordCountList.get(1)>0) {
+		if (recordCountList.get(1) > 0) {
 			timeDurationAvgList.set(1, (totalTimeDurationList.get(1) / recordCountList.get(1)));
 		}
-		if (recordCountList.get(2)>0) {
+		if (recordCountList.get(2) > 0) {
 			timeDurationAvgList.set(2, (totalTimeDurationList.get(2) / recordCountList.get(2)));
 		}
-		if (recordCountList.get(3)>0) {
+		if (recordCountList.get(3) > 0) {
 			timeDurationAvgList.set(3, (totalTimeDurationList.get(3) / recordCountList.get(3)));
 		}
-		if (recordCountList.get(4)>0) {
+		if (recordCountList.get(4) > 0) {
 			timeDurationAvgList.set(4, (totalTimeDurationList.get(4) / recordCountList.get(4)));
 		}
-		if (recordCountList.get(5)>0) {
+		if (recordCountList.get(5) > 0) {
 			timeDurationAvgList.set(5, (totalTimeDurationList.get(5) / recordCountList.get(5)));
 		}
 		map.put("timeDurationAvgList", timeDurationAvgList);
