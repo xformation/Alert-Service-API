@@ -105,7 +105,7 @@ public class AlertController {
 			logger.info("End updating alert in elastic");
 		}catch (Exception e) {
 			logger.error("Error in updating alert in elastic. Returning original list. Exception : ", e);
-			list = customElasticService.getAllAlerts(obj, applicationProperties);
+			list = customElasticService.getAllAlerts(applicationProperties);
 			return new ResponseEntity<>(list, HttpStatus.PRECONDITION_FAILED);
 		}
 		Alert alert = null;
@@ -118,11 +118,16 @@ public class AlertController {
 			logger.error("Error in updating alert in database : "+ e.getMessage());
 		}
 		
-		if(alert == null) {
-			logger.info("Alert not found in database. Searching alert in elastic");
-			alert = customElasticService.getAlert(obj, applicationProperties, guid);
-			logger.info("Alert found in elastic : "+alert.toString());
+		try {
+			if(alert == null) {
+				logger.info("Alert not found in database. Searching alert in elastic");
+				alert = customElasticService.getAlert(applicationProperties, guid);
+				logger.info("Alert found in elastic : "+alert.toString());
+			}
+		}catch(Exception e) {
+			logger.error("Error in getting alert from elastic : "+ e.getMessage());
 		}
+		
 		
 		try {
 			logger.info("Begin sending alert response time message to kafka");
@@ -169,7 +174,7 @@ public class AlertController {
 			logger.info("End deleting alert from elastic");
 		}catch (Exception e) {
 			logger.error("Error in deleting alert from elastic. Returning original list. Exception : ", e);
-			list = customElasticService.getAllAlerts(obj, applicationProperties);
+			list = customElasticService.getAllAlerts(applicationProperties);
 			return new ResponseEntity<>(list, HttpStatus.PRECONDITION_FAILED);
 		}
 		
