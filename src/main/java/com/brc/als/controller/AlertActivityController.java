@@ -3,6 +3,7 @@ package com.brc.als.controller;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public class AlertActivityController {
     	
     	ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
     	List<Map> listData = customDruidService.getRecords(ap.getDruidAlertActivityDataSource(), null);
-    	
+    	listData.forEach(oneMap -> repalceTimeStamp(oneMap));
     	logger.info("Request to get alert activity from druid completed");
 		return listData;
 	}
@@ -65,6 +66,7 @@ public class AlertActivityController {
     	DruidFilter filter = new SelectorFilter("guid", guid);
 		
     	List<Map> listData = customDruidService.getRecords(ap.getDruidAlertActivityDataSource(), filter);
+    	listData.forEach(oneMap -> repalceTimeStamp(oneMap));
     	logger.info("Request to get alert activity activities of an alert from druid completed");
 		return listData;
     }
@@ -155,4 +157,11 @@ public class AlertActivityController {
 		return map;
     }
 
+    public void repalceTimeStamp(Map oneMap) {
+		Instant timestamp=Instant.parse(oneMap.get("timestamp").toString());
+		logger.debug("Instant time = "+timestamp);
+		LocalDateTime dateTime = timestamp.atZone(ZoneId.systemDefault()).toLocalDateTime();
+		logger.debug("Instant converted to LocalDateTime: "+dateTime);
+		oneMap.replace("timestamp", dateTime);
+	}
 }

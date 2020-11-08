@@ -2,6 +2,7 @@ package com.brc.als.config;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
@@ -55,6 +56,13 @@ public class CustomElasticService {
 	}
 	
 	public List getAllAlerts(ObjectNode obj, ApplicationProperties ap) {
+		obj.put("type", "alert");
+		obj.put("index", "alert");
+		List res = restTemplate.getForObject(ap.getSearchSrvUrl() + "/search/searchWithIndexAndType", List.class, obj);
+		return res;
+	}
+	
+	public List getAllAlerts(Map obj, ApplicationProperties ap) {
 		obj.put("type", "alert");
 		obj.put("index", "alert");
 		List res = restTemplate.getForObject(ap.getSearchSrvUrl() + "/search/searchWithIndexAndType", List.class, obj);

@@ -50,7 +50,7 @@ public class CustomDruidService {
 			list= client.query(query,Map.class);
 			logger.debug("Total records retrived from druid : "+listData.size());
 			sortRecords(list, listData);
-			listData.forEach(oneMap -> repalceTimeStamp(oneMap));
+//			listData.forEach(oneMap -> repalceTimeStamp(oneMap));
 			
 		}catch (Exception e) {
 			logger.error("Exception in getting data from druid. Returning empty list : ", e);
@@ -61,13 +61,13 @@ public class CustomDruidService {
 		return listData;
 	}
 	
-	public void repalceTimeStamp(Map oneMap) {
-		Instant timestamp=Instant.parse(oneMap.get("timestamp").toString());
-		logger.debug("Instant time = "+timestamp);
-		LocalDateTime dateTime = timestamp.atZone(ZoneId.systemDefault()).toLocalDateTime();
-		logger.debug("Instant converted to LocalDateTime: "+dateTime);
-		oneMap.replace("timestamp", dateTime);
-	}
+//	public void repalceTimeStamp(Map oneMap) {
+//		Instant timestamp=Instant.parse(oneMap.get("timestamp").toString());
+//		logger.debug("Instant time = "+timestamp);
+//		LocalDateTime dateTime = timestamp.atZone(ZoneId.systemDefault()).toLocalDateTime();
+//		logger.debug("Instant converted to LocalDateTime: "+dateTime);
+//		oneMap.replace("timestamp", dateTime);
+//	}
 	
 	private void sortRecords(List<Map> list, List<Map> listData) {
 		for(Map map: list) {

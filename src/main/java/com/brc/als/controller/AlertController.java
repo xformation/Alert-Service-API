@@ -149,17 +149,32 @@ public class AlertController {
 		}
 		return new ResponseEntity<>(list, HttpStatus.OK);
 	}
-
-
-	
-
 	
 	@DeleteMapping("/deleteAlert/{guid}")
 	public ResponseEntity<Object> deleteAlert(@PathVariable String guid) {
 		logger.info("Request to delete alert. Guid : " + guid);
 		ApplicationProperties applicationProperties = AlertserviceApp.getBean(ApplicationProperties.class);
 		List list = null;
+		Map<String, String> obj = new HashMap<>();
+		obj.put("type", "alert");
+		obj.put("index", "alert");
+		obj.put("searchKey", "guid");
+		obj.put("searchValue", guid);
 		try {
+			logger.info("Begin deleting alert from elastic");
+			list = restTemplate.postForObject(applicationProperties.getSearchSrvUrl() + "/search/deleteWithQuery", obj, List.class);
+			if (list == null) {
+				list = Collections.emptyList();
+			}
+			logger.info("End deleting alert from elastic");
+		}catch (Exception e) {
+			logger.error("Error in deleting alert from elastic. Returning original list. Exception : ", e);
+			list = customElasticService.getAllAlerts(obj, applicationProperties);
+			return new ResponseEntity<>(list, HttpStatus.PRECONDITION_FAILED);
+		}
+		
+		try {
+			logger.info("Begin deleting alert from database");
 			Alert al = new Alert();
 			al.setGuid(guid);
 			Optional<Alert> oa = alertRepository.findOne(Example.of(al));
@@ -167,24 +182,10 @@ public class AlertController {
 				Alert alert = oa.get();
 				alertRepository.delete(alert);
 				logger.debug("Alert deleted from db successfully");
-				Map<String, String> obj = new HashMap<>();
-				obj.put("type", "alert");
-				obj.put("index", "alert");
-				obj.put("searchKey", "guid");
-				obj.put("searchValue", guid);
-				list = restTemplate.postForObject(applicationProperties.getSearchSrvUrl() + "/search/deleteWithQuery",
-						obj, List.class);
-				if (list == null) {
-					list = Collections.emptyList();
-				}
-				logger.debug("Alert deleted from elasticsearch successfully");
-
 			}
-
+			logger.info("End deleting alert from database");
 		} catch (Exception e) {
-			logger.error("Error in updating alert: ", e);
-			list = Collections.emptyList();
-			return new ResponseEntity<>(list, HttpStatus.PRECONDITION_FAILED);
+			logger.error("Error in deleting alert from database: ", e);
 		}
 
 		return new ResponseEntity<>(list, HttpStatus.OK);
