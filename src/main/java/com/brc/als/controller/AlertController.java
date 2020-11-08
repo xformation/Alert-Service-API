@@ -8,7 +8,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,8 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,23 +36,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import com.brc.als.AlertserviceApp;
 import com.brc.als.config.ApplicationProperties;
+import com.brc.als.config.CustomDruidService;
+import com.brc.als.config.CustomElasticService;
+import com.brc.als.config.CustomKafkaService;
+import com.brc.als.config.CustomPostgresService;
 import com.brc.als.domain.Alert;
 import com.brc.als.repository.AlertRepository;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import in.zapr.druid.druidry.client.DruidClient;
-import in.zapr.druid.druidry.client.DruidConfiguration;
-import in.zapr.druid.druidry.client.DruidJerseyClient;
-import in.zapr.druid.druidry.client.exception.ConnectionException;
-import in.zapr.druid.druidry.dataSource.TableDataSource;
-import in.zapr.druid.druidry.filter.DruidFilter;
-import in.zapr.druid.druidry.filter.SelectorFilter;
-import in.zapr.druid.druidry.query.config.Interval;
-import in.zapr.druid.druidry.query.scan.DruidScanQuery;
 
 /**
  * REST controller for managing {@link com.brc.als.domain.Alert}.
@@ -79,6 +70,18 @@ public class AlertController {
 	@Autowired
 	AlertActivityController alertActivityController;
 
+	@Autowired
+	CustomKafkaService customKafkaService;
+	
+	@Autowired
+    CustomDruidService customDruidService;
+	
+	@Autowired
+    CustomElasticService customElasticService;
+	
+	@Autowired
+    CustomPostgresService customPostgresService;
+	
 	/**
 	 * {@code POST  /updateAlert} : update an entry in alert.
 	 *
@@ -87,124 +90,70 @@ public class AlertController {
 	 *         in updated alert, or with status {@code 417 Exception_Failed} if guid
 	 *         is null,
 	 */
+	
 	@PostMapping("/updateAlert")
 	public ResponseEntity<Object> updateAlert(@RequestBody ObjectNode obj) {
 		logger.info("Request to update alert. Request object : " + obj);
 		ApplicationProperties applicationProperties = AlertserviceApp.getBean(ApplicationProperties.class);
+		String guid = obj.get("guid").asText();
+		String alertState = obj.get("alertState").asText();
+
 		List list = null;
 		try {
-			String guid = obj.get("guid").asText();
-			Alert al = new Alert();
-			al.setGuid(guid);
-			Optional<Alert> oa = alertRepository.findOne(Example.of(al));
-			String alertState = obj.get("alertState").asText();
-			if (oa.isPresent()) {
-				Alert alert = oa.get();
-				alert.setAlertState(alertState);
-				alert.setUpdatedOn(Instant.now());
-				alert = alertRepository.save(alert);
-				logger.info("Alert updated in db successfully");
-
-				obj.put("type", "alert");
-				obj.put("index", "alert");
-				obj.put("searchKey", "guid");
-				obj.put("searchValue", guid);
-				obj.put("updateKey", "alert_state");
-				obj.put("updateValue", alertState);
-				try {
-					list = restTemplate.postForObject(
-							applicationProperties.getSearchSrvUrl() + "/search/updateWithQuery", obj, List.class);
-					logger.info("Alert updated in elasticsearch successfully");
-				} catch (Exception e) {
-					// TODO: handle exception
-
-				}
-				/* first updated code */
-				AlertActivityController alertActivityController = AlertserviceApp
-						.getBean(AlertActivityController.class);
-				List<Map> firstRespData = list = alertActivityController.getDataFromFirstResp();
-				boolean guidAvailableInFirstRespFlag = false;
-				for (Map map : firstRespData) {
-					String mapGuid = (String) map.get("guid");
-					if (mapGuid.equalsIgnoreCase(guid)) {
-						guidAvailableInFirstRespFlag = true;
-					}
-				}
-				if (!guidAvailableInFirstRespFlag) {
-					JSONObject firstRespJsonObject = new JSONObject();
-					firstRespJsonObject.put("guid", guid);
-					firstRespJsonObject.put("name", alert.getName());
-					firstRespJsonObject.put("type", "alert");
-					firstRespJsonObject.put("createdon", alert.getCreatedOn());
-					firstRespJsonObject.put("updatedon", alert.getUpdatedOn());
-					firstRespJsonObject.put("user", "Automated");
-					UriComponentsBuilder builder = UriComponentsBuilder
-							.fromUriString(applicationProperties.getKafkaQueueUrl())
-							.queryParam("topic", applicationProperties.getResponseTimeKafkaTopic())
-							.queryParam("msg", firstRespJsonObject.toString());
-					logger.debug("Kafka URI for  first response :" + builder.toUriString());
-					String res = restTemplate.getForObject(builder.toUriString(), String.class);
-					logger.debug("Alert update sent to separate kafka topic - ."
-							+ applicationProperties.getResponseTimeKafkaTopic() + " Response : " + res);
-				}
-				/* first updated code */
-
-				/* wait time code */
-				{
-					JSONObject waitTimeJsonObject = new JSONObject();
-					waitTimeJsonObject.put("guid", guid);
-					waitTimeJsonObject.put("name", alert.getName());
-					waitTimeJsonObject.put("type", "alert");
-					waitTimeJsonObject.put("createdon", alert.getCreatedOn());
-					waitTimeJsonObject.put("updatedon", alert.getUpdatedOn());
-					waitTimeJsonObject.put("user", "Automated");
-					waitTimeJsonObject.put("alert_state", alert.getAlertState());
-					UriComponentsBuilder builder = UriComponentsBuilder
-							.fromUriString(applicationProperties.getKafkaQueueUrl())
-							.queryParam("topic", applicationProperties.getWaitTimeKafkaTopic())
-							.queryParam("msg", waitTimeJsonObject.toString());
-					logger.debug("Kafka URI for  first response :" + builder.toUriString());
-					String res = restTemplate.getForObject(builder.toUriString(), String.class);
-					logger.debug("Alert update sent to separate kafka topic - ."
-							+ applicationProperties.getWaitTimeKafkaTopic() + " Response : " + res);
-
-				}
-				/* wait time code */
-
-				/* send data to alert_activity kafka topic code */
-				JSONObject jsonObject = new JSONObject();
-				jsonObject.put("guid", guid);
-				jsonObject.put("name", alert.getName());
-				jsonObject.put("action", "Alert updated");
-				jsonObject.put("action_description", "Alert updated. Alert state changed to " + alertState);
-				jsonObject.put("action_time", Instant.now());
-				jsonObject.put("ticket", "");
-				jsonObject.put("ticket_description", "");
-				jsonObject.put("user", "Automated");
-//				HttpHeaders headers = new HttpHeaders();
-//				headers.setContentType(MediaType.APPLICATION_JSON);
-//				HttpEntity<Object> requestEntity = new HttpEntity<Object>(headers);
-				UriComponentsBuilder builder = UriComponentsBuilder
-						.fromUriString(applicationProperties.getKafkaQueueUrl())
-						.queryParam("topic", applicationProperties.getAlertActivityKafaTopic())
-						.queryParam("msg", jsonObject.toString());
-//				restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, String.class);
-				logger.debug("Kafka URI for alert activity :" + builder.toUriString());
-				String res = restTemplate.getForObject(builder.toUriString(), String.class);
-				logger.debug("Alert activity sent to separate kafka topic - ."
-						+ applicationProperties.getAlertActivityKafaTopic() + " Response : " + res);
-				/* send data to alert_activity kafka topic code */
-			} else {
-				logger.warn("No alert found in database. Guid : " + guid);
-			}
-		} catch (Exception e) {
-			logger.error("Error in updating alert: ", e);
-			list = Collections.emptyList();
+			logger.info("Begin updating alert in elastic");
+			list = customElasticService.updateAlert(obj, applicationProperties, list, guid, alertState);
+			logger.info("End updating alert in elastic");
+		}catch (Exception e) {
+			logger.error("Error in updating alert in elastic. Returning original list. Exception : ", e);
+			list = customElasticService.getAllAlerts(obj, applicationProperties);
 			return new ResponseEntity<>(list, HttpStatus.PRECONDITION_FAILED);
+		}
+		Alert alert = null;
+		
+		try {
+			logger.info("Begin updating alert in database");
+			alert = customPostgresService.updateAlert(obj);
+			logger.info("End updating alert in database");
+		} catch (Exception e) {
+			logger.error("Error in updating alert in database : "+ e.getMessage());
+		}
+		
+		if(alert == null) {
+			logger.info("Alert not found in database. Searching alert in elastic");
+			alert = customElasticService.getAlert(obj, applicationProperties, guid);
+			logger.info("Alert found in elastic : "+alert.toString());
+		}
+		
+		try {
+			logger.info("Begin sending alert response time message to kafka");
+			customDruidService.sendAlertResponseTime(applicationProperties, guid, alert);
+			logger.info("End sending alert response time message to kafka");
+		}catch (org.springframework.boot.configurationprocessor.json.JSONException e) {
+			logger.error("Error in sending response time to kafka : "+ e.getMessage());
+		}
+		
+		try {
+			logger.info("Begin sending alert wait time message to kafka");
+			customDruidService.sendAlertWaitTime(applicationProperties, guid, alert);
+			logger.info("End sending alert wait time message to kafka");
+		}catch (org.springframework.boot.configurationprocessor.json.JSONException e) {
+			logger.error("Error in sending wait time to kafka : "+ e.getMessage());
+		}
+		
+		try {
+			logger.info("Begin sending alert activity message to kafka");
+			customDruidService.sendAlertActivity(applicationProperties, guid, alertState, alert);
+			logger.info("End sending alert activity message to kafka");
+		}catch (org.springframework.boot.configurationprocessor.json.JSONException e) {
+			logger.error("Error in sending alert activit to kafka : "+ e.getMessage());
 		}
 		return new ResponseEntity<>(list, HttpStatus.OK);
 	}
 
+
+	
+
+	
 	@DeleteMapping("/deleteAlert/{guid}")
 	public ResponseEntity<Object> deleteAlert(@PathVariable String guid) {
 		logger.info("Request to delete alert. Guid : " + guid);

@@ -3,19 +3,14 @@ package com.brc.als.controller;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,29 +23,19 @@ import org.springframework.web.client.RestTemplate;
 
 import com.brc.als.AlertserviceApp;
 import com.brc.als.config.ApplicationProperties;
-import com.brc.als.config.SynectikDruidClient;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.brc.als.config.CustomDruidService;
 
-import in.zapr.druid.druidry.client.DruidClient;
-import in.zapr.druid.druidry.client.DruidConfiguration;
-import in.zapr.druid.druidry.client.DruidJerseyClient;
-import in.zapr.druid.druidry.client.exception.ConnectionException;
-import in.zapr.druid.druidry.dataSource.TableDataSource;
 import in.zapr.druid.druidry.filter.DruidFilter;
 import in.zapr.druid.druidry.filter.SelectorFilter;
-import in.zapr.druid.druidry.query.config.Interval;
-import in.zapr.druid.druidry.query.scan.DruidScanQuery;
 
 /**
- * REST controller for managing {@link com.brc.als.domain.Alert}.
+ * REST controller for managing {@link com.brc.als.domain.AlertActivityController}.
  */
 @RestController
 @RequestMapping("/api")
 public class AlertActivityController {
 
     private static final Logger logger = LoggerFactory.getLogger(AlertActivityController.class);
-
-    private static final String ENTITY_NAME = "AlertActivityController";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -59,190 +44,68 @@ public class AlertActivityController {
     RestTemplate restTemplate;
     
     @Autowired
-    SynectikDruidClient synDruidClient;
+    CustomDruidService customDruidService;
+    
     @GetMapping("/getDataFromAlertActivity")
 	public List<Map> getDataFromAlertActivity(){
+    	logger.info("Request to get alert activity from druid");
+    	
     	ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
-		List<Map> list=new ArrayList<Map>();
-		List<Map> listData=new ArrayList<Map>();
-//		DruidClient client = synDruidClient.client(); 
-		DruidConfiguration config = DruidConfiguration.builder().host("100.64.108.25").port(18888).endpoint("druid/v2/").build();
-		DruidClient client = new DruidJerseyClient(config);
-		logger.info("Request to get alert activity from druid");
-		try {
-			LocalDate startDate=LocalDate.now().minus(2,ChronoUnit.YEARS);
-			LocalDate endDate=LocalDate.now().plus(1,ChronoUnit.YEARS);
-			DateTime startTime = new DateTime(startDate.getYear(), startDate.getMonthValue(), startDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
-			DateTime endTime = new DateTime(endDate.getYear(),endDate.getMonthValue(), endDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
-			Interval interval = new Interval(startTime, endTime);
-			DruidScanQuery query = DruidScanQuery.builder().dataSource(new TableDataSource(ap.getDruidAlertActivityDataSource()))
-					.intervals(Collections.singletonList(interval))
-					.batchSize(10000).limit(1000L).legacy(true).build();
-			client.connect();
-			list= client.query(query,Map.class);
-			for(Map map: list) {
-				List<Map> eventList= (List<Map>) map.get("events");
-				listData.addAll(eventList);
-			}
-			Comparator<Map> mapComparator = new Comparator<Map>() {
-				@Override
-				public int compare(Map m1, Map m2) {
-					Instant val1 = Instant.parse(m1.get("timestamp").toString());
-					Instant val2 = Instant.parse(m2.get("timestamp").toString());
-					return val2.compareTo(val1);
-				}
-			};
-			Collections.sort(listData, mapComparator);
-			listData.forEach(oneMap -> repalceTimeStamp(oneMap));
-			logger.debug("Total records retrived from druid : "+listData.size());
-		}catch (Exception e) {
-			logger.error("Exception in getting alert activity from druid. Returning empty list : ", e);
-			return Collections.emptyList();
-		}finally {
-			try {
-				client.close();
-			}catch(ConnectionException ce) {
-				logger.error("Exception in closing druid client connection: ", ce);
-			}
-		}
+    	List<Map> listData = customDruidService.getRecords(ap.getDruidAlertActivityDataSource(), null);
+    	
+    	logger.info("Request to get alert activity from druid completed");
 		return listData;
 	}
-    
+
     @GetMapping("/getDataFromAlertActivity/{guid}")
    	public  List<Map> getDataFromAlertActivityByGuid(@PathVariable String guid){
+    	logger.info("Request to get alert activities of an alert from druid. Guid : "+guid);
+		
     	ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
-		List<Map> list=new ArrayList<Map>();
-		List<Map> listData=new ArrayList<Map>();
-		DruidClient client = synDruidClient.client(ap); 
-//		DruidConfiguration config = DruidConfiguration.builder().host("100.64.108.25").port(18888).endpoint("druid/v2/").build();
-//		DruidConfiguration config = DruidConfiguration.builder().host("localhost").port(8888).endpoint("druid/v2/").build();
-//		DruidClient client = new DruidJerseyClient(config);
-		logger.info("Request to get alert activity from druid. Guid : "+guid);
-		try {
-			LocalDate startDate=LocalDate.now().minus(2,ChronoUnit.YEARS);
-			LocalDate endDate=LocalDate.now().plus(1,ChronoUnit.DAYS);
-			DateTime startTime = new DateTime(startDate.getYear(), startDate.getMonthValue(), startDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
-			DateTime endTime = new DateTime(endDate.getYear(),endDate.getMonthValue(), endDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
-			Interval interval = new Interval(startTime, endTime);
-			DruidFilter filter = new SelectorFilter("guid", guid);
-			DruidScanQuery query = DruidScanQuery.builder().dataSource(new TableDataSource(ap.getDruidAlertActivityDataSource()))
-					.intervals(Collections.singletonList(interval))
-					.filter(filter)
-					.batchSize(10000).limit(1000L).legacy(true).build();
-			client.connect();
-			list= client.query(query,Map.class);
-			for(Map map: list) {
-				List<Map> eventList= (List<Map>) map.get("events");
-				listData.addAll(eventList);
-			}
-			Comparator<Map> mapComparator = new Comparator<Map>() {
-				@Override
-				public int compare(Map m1, Map m2) {
-					Instant val1 = Instant.parse(m1.get("timestamp").toString());
-					Instant val2 = Instant.parse(m2.get("timestamp").toString());
-					return val2.compareTo(val1);
-				}
-			};
-			Collections.sort(listData, mapComparator);
-			listData.forEach(oneMap -> repalceTimeStamp(oneMap));
-			logger.debug("Total record retrived from druid : "+list.size());
-		}catch (Exception e) {
-			logger.error("Exception in getting data from druid. Returning empty list : ", e);
-			return Collections.emptyList();
-		}
+    	DruidFilter filter = new SelectorFilter("guid", guid);
+		
+    	List<Map> listData = customDruidService.getRecords(ap.getDruidAlertActivityDataSource(), filter);
+    	logger.info("Request to get alert activity activities of an alert from druid completed");
 		return listData;
     }
+    
     @GetMapping("/getDataFromFirstResp")
    	public  List<Map> getDataFromFirstResp(){
+    	logger.info("Request to get first response data from druid");
+    	
     	ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
-		List<Map> list=new ArrayList<Map>();
-		List<Map> listData=new ArrayList<Map>();
-		DruidClient client = synDruidClient.client(ap); 
-		logger.info("Request to get first_response data from druid. : ");
-		try {
-			LocalDate startDate=LocalDate.now().minus(2,ChronoUnit.YEARS);
-			LocalDate endDate=LocalDate.now().plus(1,ChronoUnit.DAYS);
-			DateTime startTime = new DateTime(startDate.getYear(), startDate.getMonthValue(), startDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
-			DateTime endTime = new DateTime(endDate.getYear(),endDate.getMonthValue(), endDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
-			Interval interval = new Interval(startTime, endTime);
-			DruidScanQuery query = DruidScanQuery.builder().dataSource(new TableDataSource(ap.getDruidResponseTimeDataSource()))
-					.intervals(Collections.singletonList(interval))
-					.batchSize(10000).limit(1000L).legacy(true).build();
-			client.connect();
-			list= client.query(query,Map.class);
-			for(Map map: list) {
-				List<Map> eventList= (List<Map>) map.get("events");
-				listData.addAll(eventList);
-			}
-			Comparator<Map> mapComparator = new Comparator<Map>() {
-				@Override
-				public int compare(Map m1, Map m2) {
-					Instant val1 = Instant.parse(m1.get("timestamp").toString());
-					Instant val2 = Instant.parse(m2.get("timestamp").toString());
-					return val2.compareTo(val1);
-				}
-			};
-			Collections.sort(listData, mapComparator);
-			logger.debug("Total record retrived from druid : "+list.size());
-		}catch (Exception e) {
-			logger.error("Exception in getting data from druid. Returning empty list : ", e);
-			return Collections.emptyList();
-		}
+    	List<Map> listData = customDruidService.getRecords(ap.getDruidResponseTimeDataSource(), null);
+    	
+    	logger.info("Request to get first response data from druid completed");
 		return listData;
     }
+    
     @GetMapping("/getAvgResponseTime")
     public Map<String,Object> getAvgResponseTime(){
     	List<Map> firstRespData=getDataFromFirstResp();
     	Map map=getLineGraphData(firstRespData);
 		return map;
-    	
     }
+    
     @GetMapping("/getWaitTimeDataAlertStateClosed")
    	public  List<Map> getWaitTimeDataAlertStateClosed(){
+    	logger.info("Request to get wait time data from druid");
+    	
     	ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
-		List<Map> list=new ArrayList<Map>();
-		List<Map> listData=new ArrayList<Map>();
-		DruidClient client = synDruidClient.client(ap); 
-		logger.info("Request to get wait_time data from druid. : ");
-		try {
-			LocalDate startDate=LocalDate.now().minus(2,ChronoUnit.YEARS);
-			LocalDate endDate=LocalDate.now().plus(1,ChronoUnit.DAYS);
-			DateTime startTime = new DateTime(startDate.getYear(), startDate.getMonthValue(), startDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
-			DateTime endTime = new DateTime(endDate.getYear(),endDate.getMonthValue(), endDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
-			Interval interval = new Interval(startTime, endTime);
-			DruidFilter filter = new SelectorFilter("alert_state","Closed");
-			DruidScanQuery query = DruidScanQuery.builder().dataSource(new TableDataSource(ap.getDruidWaitTimeDatasource()))
-					.intervals(Collections.singletonList(interval))
-					.filter(filter)
-					.batchSize(10000).limit(1000L).legacy(true).build();
-			client.connect();
-			list= client.query(query,Map.class);
-			for(Map map: list) {
-				List<Map> eventList= (List<Map>) map.get("events");
-				listData.addAll(eventList);
-			}
-			Comparator<Map> mapComparator = new Comparator<Map>() {
-				@Override
-				public int compare(Map m1, Map m2) {
-					Instant val1 = Instant.parse(m1.get("timestamp").toString());
-					Instant val2 = Instant.parse(m2.get("timestamp").toString());
-					return val2.compareTo(val1);
-				}
-			};
-			Collections.sort(listData, mapComparator);
-			logger.debug("Total record retrived from druid : "+list.size());
-		}catch (Exception e) {
-			logger.error("Exception in getting data from druid. Returning empty list : ", e);
-			return Collections.emptyList();
-		}
+    	DruidFilter filter = new SelectorFilter("alert_state","Closed");
+    	List<Map> listData = customDruidService.getRecords(ap.getDruidWaitTimeDatasource(), filter);
+    	
+    	logger.info("Request to get wait time data from druid completed");
 		return listData;
     }
+    
     @GetMapping("/getWaitTimeGraphData")
     public Map<String,Object> getWaitTimeGraphData(){
     	List<Map> mapData=getWaitTimeDataAlertStateClosed();
     	Map map=getLineGraphData(mapData);
-    	 return map;   	
+    	return map;   	
     }
+    
     public Map getLineGraphData(List<Map> mapData) {
     	List<LocalDate> daysList = new ArrayList<LocalDate>();
     	LocalDate today=LocalDate.now();
@@ -291,14 +154,5 @@ public class AlertActivityController {
 		map.put("daysList", daysList);
 		return map;
     }
-    
-	public static void repalceTimeStamp(Map oneMap) {
-		Instant timestamp=Instant.parse(oneMap.get("timestamp").toString());
-		logger.debug("Instant time = "+timestamp);
-		LocalDateTime dateTime = timestamp.atZone(ZoneId.systemDefault()).toLocalDateTime();
-		logger.debug("Instant converted to LocalDateTime: "+dateTime);
-		oneMap.replace("timestamp", dateTime);
-	}
-	
-    
+
 }
