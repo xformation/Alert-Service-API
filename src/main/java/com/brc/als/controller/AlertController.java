@@ -219,12 +219,15 @@ public class AlertController {
 		logger.debug("Request to get top alerts");
 		List<Alert> selectedAlList = new ArrayList<>();
 		List<Alert> list = new ArrayList<>();
-
+		List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 		LocalDate today = LocalDate.parse(LocalDate.now().format(formatter), formatter);
 		logger.debug("Today : " + today);
 
 		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "updatedOn"));
+		if(allAlList.size() == 0 ) {
+			return mapList;
+		}
 		for (Alert al : allAlList) {
 			LocalDate laDate = LocalDateTime.ofInstant(al.getUpdatedOn(), ZoneOffset.UTC).toLocalDate();
 			logger.debug("Alert date : " + laDate);
@@ -271,8 +274,9 @@ public class AlertController {
 				return updatedOnDate2.compareTo(updatedOnDate1);
 			}
 		};
+		
 		Collections.sort(selectedAlList, comparator);
-		List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>();
+		
 		for (Alert alert : selectedAlList) {
 			Map<String, Object> map = new HashMap<String, Object>();
 			map.put("name", alert.getName());
