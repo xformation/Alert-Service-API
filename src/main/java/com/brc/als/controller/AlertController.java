@@ -133,7 +133,7 @@ public class AlertController {
 			logger.info("Begin sending alert response time message to kafka");
 			customDruidService.sendAlertResponseTime(applicationProperties, guid, alert);
 			logger.info("End sending alert response time message to kafka");
-		}catch (org.springframework.boot.configurationprocessor.json.JSONException e) {
+		}catch (Exception e) {
 			logger.error("Error in sending response time to kafka : "+ e.getMessage());
 		}
 		
@@ -141,7 +141,7 @@ public class AlertController {
 			logger.info("Begin sending alert wait time message to kafka");
 			customDruidService.sendAlertWaitTime(applicationProperties, guid, alert);
 			logger.info("End sending alert wait time message to kafka");
-		}catch (org.springframework.boot.configurationprocessor.json.JSONException e) {
+		}catch (Exception e) {
 			logger.error("Error in sending wait time to kafka : "+ e.getMessage());
 		}
 		
@@ -149,7 +149,7 @@ public class AlertController {
 			logger.info("Begin sending alert activity message to kafka");
 			customDruidService.sendAlertActivity(applicationProperties, guid, alertState, alert);
 			logger.info("End sending alert activity message to kafka");
-		}catch (org.springframework.boot.configurationprocessor.json.JSONException e) {
+		}catch (Exception e) {
 			logger.error("Error in sending alert activit to kafka : "+ e.getMessage());
 		}
 		return new ResponseEntity<>(list, HttpStatus.OK);

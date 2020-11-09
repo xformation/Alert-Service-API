@@ -43,9 +43,16 @@ public class CustomElasticService {
 		try {
 			alert.setGuid(guid);
 			alert.setName(res.getString("name"));
-			long l = Long.parseLong(res.getString("createdon"));
+			alert.setAlertState("alert_state");
+			alert.setClient("client");
+			alert.setClientUrl("client_url");
+			alert.setDescription("description");
+			alert.setFiredtime("firedtime");
+			alert.setIncidentKey("incident_key");
+			alert.setSeverity("severity");
+			long l = Long.parseLong(res.getString("created_on"));
 			alert.setCreatedOn(Instant.ofEpochMilli(l));
-			l = Long.parseLong(res.getString("updatedon"));
+			l = Long.parseLong(res.getString("updated_on"));
 			alert.setUpdatedOn(Instant.ofEpochMilli(l));
 		}catch(Exception e) {
 			logger.error("Exeption in converting JSONObject to alert: ", e);
