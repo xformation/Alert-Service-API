@@ -334,31 +334,31 @@ public class AlertController {
 			}
 		}
 		for (Alert al : list) {
-			if (al.getSeverity().equalsIgnoreCase("Urgent")) {
+			if ("Urgent".equalsIgnoreCase(al.getSeverity())) {
 				selectedAlList.add(al);
 				break;
 			}
 		}
 		for (Alert al : list) {
-			if (al.getSeverity().equalsIgnoreCase("Critical")) {
+			if ("Critical".equalsIgnoreCase(al.getSeverity())) {
 				selectedAlList.add(al);
 				break;
 			}
 		}
 		for (Alert al : list) {
-			if (al.getSeverity().equalsIgnoreCase("High")) {
+			if ("High".equalsIgnoreCase(al.getSeverity())) {
 				selectedAlList.add(al);
 				break;
 			}
 		}
 		for (Alert al : list) {
-			if (al.getSeverity().equalsIgnoreCase("Medium")) {
+			if ("Medium".equalsIgnoreCase(al.getSeverity())) {
 				selectedAlList.add(al);
 				break;
 			}
 		}
 		for (Alert al : list) {
-			if (al.getSeverity().equalsIgnoreCase("Low")) {
+			if ("Low".equalsIgnoreCase(al.getSeverity())) {
 				selectedAlList.add(al);
 				break;
 			}
@@ -372,8 +372,9 @@ public class AlertController {
 				return updatedOnDate2.compareTo(updatedOnDate1);
 			}
 		};
-		
-		Collections.sort(selectedAlList, comparator);
+		if(selectedAlList.size()>0) {
+			Collections.sort(selectedAlList, comparator);
+		}
 		
 		for (Alert alert : selectedAlList) {
 			Map<String, Object> map = new HashMap<String, Object>();
@@ -388,7 +389,21 @@ public class AlertController {
 	@GetMapping("/getAlertVolumeData")
 	public Map<String, Object> getAlertVolumeData() {
 		logger.debug("Request to get top alerts");
-		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "createdOn"));
+//		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "createdOn"));
+		ApplicationProperties applicationProperties = AlertserviceApp.getBean(ApplicationProperties.class);
+		List ls = customElasticService.getAllAlerts(applicationProperties);
+		List<Alert> allAlList = customElasticService.convertStringToAlertList(ls);
+		logger.debug("Sorting alerts on created on");
+		Collections.sort(allAlList, new Comparator<Alert>() {
+			@Override
+			public int compare(Alert m1, Alert m2) {
+				Instant val1 = Instant.parse(m1.getCreatedOn().toString());
+				Instant val2 = Instant.parse(m2.getCreatedOn().toString());
+				return val2.compareTo(val1);
+			}
+		});
+		
+		
 		List<Alert> last6DayAlerts = new ArrayList<Alert>();
 		for (Alert alert : allAlList) {
 			if (alert.getCreatedOn().isAfter(Instant.now().minus(5, ChronoUnit.DAYS))) {
@@ -473,7 +488,21 @@ public class AlertController {
 	@GetMapping("/getAverageResponseTimeGraphData")
 	public Map<String, Object> getAverageResponseTimeGraphData() {
 		logger.debug("Request to get Average Response Time graph data");
-		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "createdOn"));
+//		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "createdOn"));
+		
+		ApplicationProperties applicationProperties = AlertserviceApp.getBean(ApplicationProperties.class);
+		List ls = customElasticService.getAllAlerts(applicationProperties);
+		List<Alert> allAlList = customElasticService.convertStringToAlertList(ls);
+		logger.debug("Sorting alerts on created on");
+		Collections.sort(allAlList, new Comparator<Alert>() {
+			@Override
+			public int compare(Alert m1, Alert m2) {
+				Instant val1 = Instant.parse(m1.getCreatedOn().toString());
+				Instant val2 = Instant.parse(m2.getCreatedOn().toString());
+				return val2.compareTo(val1);
+			}
+		});
+		
 		List<Alert> last6DayAlerts = new ArrayList<Alert>();
 		for (Alert alert : allAlList) {
 			if (alert.getCreatedOn().isAfter(Instant.now().minus(5, ChronoUnit.DAYS))) {
@@ -555,7 +584,20 @@ public class AlertController {
 	@GetMapping("/getAlertVolumeByStatus")
 	public Map<String, Object> getAlertVolumeByStatus() {
 		logger.debug("Request to get alert Volume by status");
-		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "createdOn"));
+//		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "createdOn"));
+		ApplicationProperties applicationProperties = AlertserviceApp.getBean(ApplicationProperties.class);
+		List ls = customElasticService.getAllAlerts(applicationProperties);
+		List<Alert> allAlList = customElasticService.convertStringToAlertList(ls);
+		logger.debug("Sorting alerts on created on");
+		Collections.sort(allAlList, new Comparator<Alert>() {
+			@Override
+			public int compare(Alert m1, Alert m2) {
+				Instant val1 = Instant.parse(m1.getCreatedOn().toString());
+				Instant val2 = Instant.parse(m2.getCreatedOn().toString());
+				return val2.compareTo(val1);
+			}
+		});
+		
 		List<Alert> last6DayAlerts = new ArrayList<Alert>();
 		for (Alert alert : allAlList) {
 			if (alert.getCreatedOn().isAfter(Instant.now().minus(5, ChronoUnit.DAYS))) {
