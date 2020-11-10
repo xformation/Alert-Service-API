@@ -102,12 +102,45 @@ public class AlertController {
 		try {
 			logger.info("Begin updating alert in elastic");
 			list = customElasticService.updateAlert(obj, applicationProperties, list, guid, alertState);
+			if (list == null) {
+				list = Collections.emptyList();
+			}
 			logger.info("End updating alert in elastic");
 		}catch (Exception e) {
 			logger.error("Error in updating alert in elastic. Returning original list. Exception : ", e);
 			list = customElasticService.getAllAlerts(applicationProperties);
-			return new ResponseEntity<>(list, HttpStatus.PRECONDITION_FAILED);
+			if (list == null) {
+				list = Collections.emptyList();
+			}
+			List<Alert> allAlList = customElasticService.convertStringToAlertList(list);
+			if(allAlList.size() > 0) {
+				logger.debug("Sorting alerts on updated on");
+				Collections.sort(allAlList, new Comparator<Alert>() {
+					@Override
+					public int compare(Alert m1, Alert m2) {
+						Instant val1 = Instant.parse(m1.getUpdatedOn().toString());
+						Instant val2 = Instant.parse(m2.getUpdatedOn().toString());
+						return val2.compareTo(val1);
+					}
+				});
+			}
+			
+			return new ResponseEntity<>(allAlList, HttpStatus.PRECONDITION_FAILED);
 		}
+		
+		List<Alert> allAlList = customElasticService.convertStringToAlertList(list);
+		if(allAlList.size() >0) {
+			logger.debug("Sorting alerts on updated on");
+			Collections.sort(allAlList, new Comparator<Alert>() {
+				@Override
+				public int compare(Alert m1, Alert m2) {
+					Instant val1 = Instant.parse(m1.getUpdatedOn().toString());
+					Instant val2 = Instant.parse(m2.getUpdatedOn().toString());
+					return val2.compareTo(val1);
+				}
+			});
+		}
+		
 		Alert alert = null;
 		
 		try {
@@ -152,7 +185,7 @@ public class AlertController {
 		}catch (Exception e) {
 			logger.error("Error in sending alert activit to kafka : "+ e.getMessage());
 		}
-		return new ResponseEntity<>(list, HttpStatus.OK);
+		return new ResponseEntity<>(allAlList, HttpStatus.OK);
 	}
 	
 	@DeleteMapping("/deleteAlert/{guid}")
@@ -175,8 +208,38 @@ public class AlertController {
 		}catch (Exception e) {
 			logger.error("Error in deleting alert from elastic. Returning original list. Exception : ", e);
 			list = customElasticService.getAllAlerts(applicationProperties);
-			return new ResponseEntity<>(list, HttpStatus.PRECONDITION_FAILED);
+			if (list == null) {
+				list = Collections.emptyList();
+			}
+			List<Alert> allAlList = customElasticService.convertStringToAlertList(list);
+			if(allAlList.size() > 0) {
+				logger.debug("Sorting alerts on updated on");
+				Collections.sort(allAlList, new Comparator<Alert>() {
+					@Override
+					public int compare(Alert m1, Alert m2) {
+						Instant val1 = Instant.parse(m1.getCreatedOn().toString());
+						Instant val2 = Instant.parse(m2.getCreatedOn().toString());
+						return val2.compareTo(val1);
+					}
+				});
+			}
+			
+			return new ResponseEntity<>(allAlList, HttpStatus.PRECONDITION_FAILED);
 		}
+		
+		List<Alert> allAlList = customElasticService.convertStringToAlertList(list);
+		if(allAlList.size() > 0) {
+			logger.debug("Sorting alerts on created on");
+			Collections.sort(allAlList, new Comparator<Alert>() {
+				@Override
+				public int compare(Alert m1, Alert m2) {
+					Instant val1 = Instant.parse(m1.getCreatedOn().toString());
+					Instant val2 = Instant.parse(m2.getCreatedOn().toString());
+					return val2.compareTo(val1);
+				}
+			});
+		}
+		
 		
 		try {
 			logger.info("Begin deleting alert from database");
@@ -193,7 +256,7 @@ public class AlertController {
 			logger.error("Error in deleting alert from database: ", e);
 		}
 
-		return new ResponseEntity<>(list, HttpStatus.OK);
+		return new ResponseEntity<>(allAlList, HttpStatus.OK);
 	}
 
 	static Object getFailedResponse(String msg) {
@@ -209,14 +272,37 @@ public class AlertController {
 
 	@GetMapping("/listAlert")
 	public List<Alert> getAllAlert() {
-		logger.debug("Request to get all alerts");
+		logger.debug("Request to get all alerts from db");
 		List<Alert> list = alertRepository.findAll(Sort.by(Direction.DESC, "id"));
 		return list;
 	}
 
+	@GetMapping("/listAllAlertFromElastic")
+	public List<Alert> listAllAlertFromElastic() {
+		logger.info("Request to get all alerts from elastic");
+		ApplicationProperties applicationProperties = AlertserviceApp.getBean(ApplicationProperties.class);
+		List ls = customElasticService.getAllAlerts(applicationProperties);
+		if(ls.size() == 0 ) {
+			return Collections.emptyList();
+		}
+		List<Alert> allAlList = customElasticService.convertStringToAlertList(ls);
+		logger.debug("Sorting alerts on created on");
+		Collections.sort(allAlList, new Comparator<Alert>() {
+			@Override
+			public int compare(Alert m1, Alert m2) {
+				Instant val1 = Instant.parse(m1.getCreatedOn().toString());
+				Instant val2 = Instant.parse(m2.getCreatedOn().toString());
+				return val2.compareTo(val1);
+			}
+		});
+		logger.info("Request to get all alerts from elastic completed");
+		return allAlList;
+	}
+	
 	@GetMapping("/topAlertToday")
 	public List<Map<String, Object>> topAlertToday() {
 		logger.debug("Request to get top alerts");
+		ApplicationProperties applicationProperties = AlertserviceApp.getBean(ApplicationProperties.class);
 		List<Alert> selectedAlList = new ArrayList<>();
 		List<Alert> list = new ArrayList<>();
 		List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>();
@@ -224,10 +310,22 @@ public class AlertController {
 		LocalDate today = LocalDate.parse(LocalDate.now().format(formatter), formatter);
 		logger.debug("Today : " + today);
 
-		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "updatedOn"));
-		if(allAlList.size() == 0 ) {
+//		List<Alert> allAlList = alertRepository.findAll(Sort.by(Direction.DESC, "updatedOn"));
+		List ls = customElasticService.getAllAlerts(applicationProperties);
+		if(ls.size() == 0 ) {
 			return mapList;
 		}
+		List<Alert> allAlList = customElasticService.convertStringToAlertList(ls);
+		logger.debug("Sorting alerts on updated on");
+		Collections.sort(allAlList, new Comparator<Alert>() {
+			@Override
+			public int compare(Alert m1, Alert m2) {
+				Instant val1 = Instant.parse(m1.getUpdatedOn().toString());
+				Instant val2 = Instant.parse(m2.getUpdatedOn().toString());
+				return val2.compareTo(val1);
+			}
+		});
+		
 		for (Alert al : allAlList) {
 			LocalDate laDate = LocalDateTime.ofInstant(al.getUpdatedOn(), ZoneOffset.UTC).toLocalDate();
 			logger.debug("Alert date : " + laDate);
@@ -537,4 +635,5 @@ public class AlertController {
 		map.put("daysList", daysList);
 		return map;
 	}
+	
 }
