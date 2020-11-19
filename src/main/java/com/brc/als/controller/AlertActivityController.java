@@ -25,6 +25,8 @@ import org.springframework.web.client.RestTemplate;
 import com.brc.als.AlertserviceApp;
 import com.brc.als.config.ApplicationProperties;
 import com.brc.als.config.CustomDruidService;
+import com.brc.als.config.CustomPostgresService;
+import com.brc.als.domain.AlertActivity;
 
 import in.zapr.druid.druidry.filter.DruidFilter;
 import in.zapr.druid.druidry.filter.SelectorFilter;
@@ -47,27 +49,30 @@ public class AlertActivityController {
     @Autowired
     CustomDruidService customDruidService;
     
+    @Autowired
+    CustomPostgresService customPostgresService;
+    
     @GetMapping("/getDataFromAlertActivity")
-	public List<Map> getDataFromAlertActivity(){
-    	logger.info("Request to get alert activity from druid");
+	public List<AlertActivity> getDataFromAlertActivity(){
+    	logger.info("Request to get alert activity from db");
     	
-    	ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
-    	List<Map> listData = customDruidService.getRecords(ap.getDruidAlertActivityDataSource(), null);
-    	listData.forEach(oneMap -> repalceTimeStamp(oneMap));
-    	logger.info("Request to get alert activity from druid completed");
+//    	ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
+    	List<AlertActivity> listData = customPostgresService.getAlertActivity(null);
+//    	listData.forEach(oneMap -> repalceTimeStamp(oneMap));
+    	logger.info("Request to get alert activity from db completed");
 		return listData;
 	}
 
     @GetMapping("/getDataFromAlertActivity/{guid}")
-   	public  List<Map> getDataFromAlertActivityByGuid(@PathVariable String guid){
-    	logger.info("Request to get alert activities of an alert from druid. Guid : "+guid);
+   	public  List<AlertActivity> getDataFromAlertActivityByGuid(@PathVariable String guid){
+    	logger.info("Request to get alert activities of an alert from db. Guid : "+guid);
 		
-    	ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
-    	DruidFilter filter = new SelectorFilter("guid", guid);
+//    	ApplicationProperties ap = AlertserviceApp.getBean(ApplicationProperties.class);
+//    	DruidFilter filter = new SelectorFilter("guid", guid);
 		
-    	List<Map> listData = customDruidService.getRecords(ap.getDruidAlertActivityDataSource(), filter);
-    	listData.forEach(oneMap -> repalceTimeStamp(oneMap));
-    	logger.info("Request to get alert activity activities of an alert from druid completed");
+    	List<AlertActivity> listData = customPostgresService.getAlertActivity(guid);
+//    	listData.forEach(oneMap -> repalceTimeStamp(oneMap));
+    	logger.info("Request to get alert activity activities of an alert from db completed");
 		return listData;
     }
     

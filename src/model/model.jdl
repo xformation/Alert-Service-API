@@ -22,5 +22,22 @@ entity Alert{
    incidentKey String
 }
 
+entity AlertActivity {
+   guid String
+   name String
+   action String
+   actionDescription String maxlength(5000)
+   createdOn Instant
+   updatedOn Instant 
+   alertState String
+   ticketId Long
+   ticketName String
+   ticketUrl String maxlength(500)
+   ticketDescription String maxlength(5000)
+   userName String
+   eventType String
+   changeLog String maxlength(10000)
+   firedTime Instant
+}
 
 dto * with mapstruct service all with serviceImpl

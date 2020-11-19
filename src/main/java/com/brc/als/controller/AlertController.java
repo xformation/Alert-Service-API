@@ -162,25 +162,26 @@ public class AlertController {
 		}
 		
 		
-		try {
-			logger.info("Begin sending alert response time message to kafka");
-			customDruidService.sendAlertResponseTime(applicationProperties, guid, alert);
-			logger.info("End sending alert response time message to kafka");
-		}catch (Exception e) {
-			logger.error("Error in sending response time to kafka : "+ e.getMessage());
-		}
-		
-		try {
-			logger.info("Begin sending alert wait time message to kafka");
-			customDruidService.sendAlertWaitTime(applicationProperties, guid, alert);
-			logger.info("End sending alert wait time message to kafka");
-		}catch (Exception e) {
-			logger.error("Error in sending wait time to kafka : "+ e.getMessage());
-		}
+//		try {
+//			logger.info("Begin sending alert response time message to kafka");
+//			customDruidService.sendAlertResponseTime(applicationProperties, guid, alert);
+//			logger.info("End sending alert response time message to kafka");
+//		}catch (Exception e) {
+//			logger.error("Error in sending response time to kafka : "+ e.getMessage());
+//		}
+//		
+//		try {
+//			logger.info("Begin sending alert wait time message to kafka");
+//			customDruidService.sendAlertWaitTime(applicationProperties, guid, alert);
+//			logger.info("End sending alert wait time message to kafka");
+//		}catch (Exception e) {
+//			logger.error("Error in sending wait time to kafka : "+ e.getMessage());
+//		}
 		
 		try {
 			logger.info("Begin sending alert activity message to kafka");
-			customDruidService.sendAlertActivity(applicationProperties, guid, alertState, alert);
+//			customDruidService.sendAlertActivity(applicationProperties, guid, alertState, alert);
+			customPostgresService.sendAlertActivity(applicationProperties, guid, alertState, alert);
 			logger.info("End sending alert activity message to kafka");
 		}catch (Exception e) {
 			logger.error("Error in sending alert activit to kafka : "+ e.getMessage());

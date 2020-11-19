@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    
+    <property name="now" value="current_timestamp" dbms="postgresql"/>
+    <!--
+        Added the entity AlertActivity.
+    -->
+    <changeSet id="20201119065657-1" author="jhipster">
+        <createTable tableName="alert_activity">
+            <!-- <column name="id" type="bigint">
+                <constraints primaryKey="true" nullable="false"/>
+            </column> -->
+            <column name="guid" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="action" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="action_description" type="varchar(5000)">
+                <constraints nullable="true" />
+            </column>
+            <column name="created_on" type="datetime">
+                <constraints nullable="true" />
+            </column>
+            <column name="updated_on" type="datetime">
+                <constraints nullable="true" />
+            </column>
+            <column name="alert_state" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="ticket_id" type="bigint">
+                <constraints nullable="true" />
+            </column>
+            <column name="ticket_name" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="ticket_url" type="varchar(500)">
+                <constraints nullable="true" />
+            </column>
+            <column name="ticket_description" type="varchar(5000)">
+                <constraints nullable="true" />
+            </column>
+            <column name="user_name" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="event_type" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="change_log" type="varchar(10000)">
+                <constraints nullable="true" />
+            </column>
+            <column name="fired_time" type="timestamp" defaultValueDate="${now}">
+                <constraints nullable="true" />
+            </column>
+            <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here -->
+        </createTable>
+        <dropDefaultValue tableName="alert_activity" columnName="created_on" columnDataType="datetime"/>
+        <dropDefaultValue tableName="alert_activity" columnName="updated_on" columnDataType="datetime"/>
+        <dropDefaultValue tableName="alert_activity" columnName="fired_time" columnDataType="datetime"/>
+    </changeSet>
+
+</databaseChangeLog>
