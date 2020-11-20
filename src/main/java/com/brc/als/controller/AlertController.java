@@ -679,4 +679,12 @@ public class AlertController {
 		return map;
 	}
 	
+	
+	@GetMapping("/getAlert/{guid}")
+	public ResponseEntity<Object> getAlert(@PathVariable String guid) throws JSONException {
+		logger.info("Request to get alert. Guid : " + guid);
+		ApplicationProperties applicationProperties = AlertserviceApp.getBean(ApplicationProperties.class);
+		Alert alert = customElasticService.getAlert(applicationProperties, guid);
+		return new ResponseEntity<>(alert, HttpStatus.OK);
+	}
 }

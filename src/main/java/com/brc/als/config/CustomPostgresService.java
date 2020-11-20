@@ -68,7 +68,7 @@ public class CustomPostgresService {
 		jsonObject.put("ticket_url", null);
 		jsonObject.put("ticket_description", null);
 		jsonObject.put("user_name", "Automated");
-		jsonObject.put("event_type", "update");
+		jsonObject.put("event_type", "Update");
 		jsonObject.put("change_log", null);
 		jsonObject.put("fired_time", Instant.now().toEpochMilli());
 		
