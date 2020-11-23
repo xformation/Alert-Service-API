@@ -63,13 +63,13 @@ public class CustomPostgresService {
 		jsonObject.put("created_on", alert.getCreatedOn().toEpochMilli());
 		jsonObject.put("updated_on", Instant.now().toEpochMilli());
 		jsonObject.put("alert_state", alertState);
-		jsonObject.put("ticket_id", null);
-		jsonObject.put("ticket_name", null);
-		jsonObject.put("ticket_url", null);
-		jsonObject.put("ticket_description", null);
+		jsonObject.put("ticket_id", 0);
+		jsonObject.put("ticket_name", "");
+		jsonObject.put("ticket_url", "");
+		jsonObject.put("ticket_description", "");
 		jsonObject.put("user_name", "Automated");
 		jsonObject.put("event_type", "Update");
-		jsonObject.put("change_log", null);
+		jsonObject.put("change_log", "");
 		jsonObject.put("fired_time", Instant.now().toEpochMilli());
 		
 		customKafkaService.sendMessageToKafka(jsonObject, applicationProperties.getAlertActivityKafaTopic());
