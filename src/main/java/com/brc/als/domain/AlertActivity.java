@@ -20,7 +20,7 @@ public class AlertActivity implements Serializable {
 //    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
 //    @SequenceGenerator(name = "sequenceGenerator")
 //    private Long id;
-
+//    @Id
     @Column(name = "guid")
     private String guid;
 
