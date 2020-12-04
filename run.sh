@@ -1,1 +1,1 @@
-java -jar target/alertservice-0.0.1-SNAPSHOT.jar 
+java -jar target/alertservice-1.0.0-SNAPSHOT.jar 
